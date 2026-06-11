@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>接单服务 · 网页 / APK / Python / PWA</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #fafafa;
+    color: #1a1a1a;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ 顶部导航 ============ */
+  nav {
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid #eee;
+    padding: 14px 20px;
+    z-index: 100;
+  }
+  nav .nav-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  nav .logo { font-size: 16px; font-weight: 600; letter-spacing: -0.5px; }
+  nav .nav-links { display: flex; gap: 24px; font-size: 14px; }
+  nav .nav-links a { color: #666; text-decoration: none; transition: color 0.2s; }
+  nav .nav-links a:hover { color: #1a1a1a; }
+
+  /* ============ 通用容器 ============ */
+  .container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+  section { padding: 80px 0; }
+  .section-title {
+    font-size: 14px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .section-h2 {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 20px;
+    line-height: 1.2;
+  }
+  .section-desc {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 40px;
+    max-width: 600px;
+  }
+
+  /* ============ Hero ============ */
+  .hero {
+    padding: 100px 0 80px;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 100%, rgba(236, 72, 153, 0.06) 0%, transparent 50%),
+      #fafafa;
+  }
+  .hero h1 {
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    color: #1a1a1a;
+  }
+  .hero h1 .accent {
+    background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p.lead {
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 32px;
+    max-width: 600px;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+    font-size: 14px;
+    color: #888;
+  }
+  .hero-meta span::before { content: "✓ "; color: #22c55e; font-weight: bold; }
+  .cta {
+    display: inline-block;
+    background: #1a1a1a;
+    color: #fff;
+    padding: 14px 32px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .cta:hover { background: #333; transform: translateY(-1px); }
+  .cta.outline {
+    background: transparent;
+    color: #1a1a1a;
+    border: 1px solid #ddd;
+    margin-left: 12px;
+  }
+
+  /* ============ 服务区 ============ */
+  .services { background: #fff; }
+  .service-item {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 32px 0;
+    border-bottom: 1px solid #eee;
+  }
+  @media (min-width: 700px) {
+    .service-item { grid-template-columns: 200px 1fr; gap: 48px; }
+  }
+  .service-item:last-child { border-bottom: none; }
+  .service-num {
+    font-size: 14px;
+    color: #999;
+    font-family: "SF Mono", "Monaco", monospace;
+  }
+  .service-name {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 4px 0 8px;
+  }
+  .service-desc {
+    color: #666;
+    margin-bottom: 16px;
+  }
+  .service-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .service-tag {
+    background: #f5f5f5;
+    color: #555;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  /* ============ 作品区 ============ */
+  .works { background: #fafafa; }
+  .works-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  @media (min-width: 700px) {
+    .works-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .work-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+  .work-card:hover {
+    border-color: #d0d0d0;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  }
+  .work-preview {
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .work-preview.g1 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+  .work-preview.g2 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+  .work-preview.g3 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+  .work-preview.g4 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+  .work-preview.g5 { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+  .work-preview.g6 { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333; }
+  .work-preview .icon { font-size: 56px; }
+  .work-info { padding: 20px; }
+  .work-info h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .work-info p {
+    font-size: 14px;
+    color: #666;
+  }
+  .work-info .tech {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #999;
+    font-family: "SF Mono", monospace;
+  }
+
+  /* ============ 流程区 ============ */
+  .process { background: #fff; }
+  .process-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  @media (min-width: 700px) {
+    .process-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  .process-step {
+    text-align: left;
+  }
+  .process-num {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  .process-step h3 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  .process-step p {
+    font-size: 14px;
+    color: #666;
+  }
+
+  /* ============ FAQ ============ */
+  .faq { background: #fafafa; }
+  .faq-list { max-width: 700px; }
+  .faq-item {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .faq-q {
+    padding: 18px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .faq-q::after {
+    content: "+";
+    font-size: 20px;
+    color: #999;
+    transition: transform 0.3s;
+  }
+  .faq-item.open .faq-q::after { transform: rotate(45deg); }
+  .faq-a {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s, padding 0.3s;
+    color: #555;
+    font-size: 14px;
+    padding: 0 20px;
+  }
+  .faq-item.open .faq-a {
+    max-height: 200px;
+    padding: 0 20px 18px;
+  }
+
+  /* ============ 联系区 ============ */
+  .contact {
+    background: #1a1a1a;
+    color: #fff;
+    text-align: center;
+    padding: 100px 20px;
+  }
+  .contact h2 {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    letter-spacing: -1px;
+  }
+  .contact p {
+    color: #aaa;
+    margin-bottom: 32px;
+    font-size: 16px;
+  }
+  .qq-large {
+    display: inline-block;
+    background: #fff;
+    color: #1a1a1a;
+    padding: 18px 48px;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-family: "SF Mono", monospace;
+  }
+  .qq-large:hover { transform: translateY(-2px); }
+  .qq-tip {
+    margin-top: 24px;
+    color: #888;
+    font-size: 14px;
+  }
+  .price-from {
+    margin-top: 32px;
+    color: #aaa;
+    font-size: 14px;
+  }
+  .price-from strong { color: #fff; font-size: 20px; }
+
+  footer {
+    text-align: center;
+    padding: 30px 20px;
+    background: #0a0a0a;
+    color: #666;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">接单服务</div>
+    <div class="nav-links">
+      <a href="#services">服务</a>
+      <a href="#works">作品</a>
+      <a href="#process">流程</a>
+      <a href="#faq">FAQ</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ Hero ============ -->
+<section class="hero">
+  <div class="container">
+    <h1>做点有用的<span class="accent">小工具</span>和<span class="accent">小网站</span>。</h1>
+    <p class="lead">一个人接单，主做网页、PWA、APK 打包、Python 自动化。9.9 元起，1-3 天交付，不满意全额退。</p>
+    <div class="hero-meta">
+      <span>5 类服务</span>
+      <span>1-3 天交付</span>
+      <span>手机电脑通吃</span>
+      <span>3 个月内免费改</span>
+    </div>
+    <a class="cta" href="#contact">发起咨询</a>
+    <a class="cta outline" href="#works">看看作品</a>
+  </div>
+</section>
+
+<!-- ============ 服务区 ============ -->
+<section class="services" id="services">
+  <div class="container">
+    <div class="section-title">SERVICE</div>
+    <h2 class="section-h2">我能做什么</h2>
+    <p class="section-desc">以下 5 类都是我做过的、能交付的。点 QQ 咨询时直接说要哪类就行。</p>
+
+    <div class="service-item">
+      <div>
+        <div class="service-num">01 / 05</div>
+        <div class="service-name">网页 / 落地页</div>
+      </div>
+      <div>
+        <p class="service-desc">单页 HTML 网站、落地页、活动页、邀请函。手机电脑自适应，5 分钟部署上线，加到桌面像 App（PWA）。</p>
+        <div class="service-tags">
+          <span class="service-tag">HTML5</span>
+          <span class="service-tag">CSS3</span>
+          <span class="service-tag">JavaScript</span>
+          <span class="service-tag">PWA</span>
+          <span class="service-tag">Vercel</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-item">
+      <div>
+        <div class="service-num">02 / 05</div>
+        <div class="service-name">APK 打包服务</div>
+      </div>
+      <div>
+        <p class="service-desc">你做好的 Godot / Unity / H5 游戏，我帮你打成安卓 APK，或者协助上架到华为/小米/OPPO/vivo 应用商店。</p>
+        <div class="service-tags">
+          <span class="service-tag">Godot 4.6</span>
+          <span class="service-tag">Unity</span>
+          <span class="service-tag">Android</span>
+          <span class="service-tag">应用商店</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-item">
+      <div>
+        <div class="service-num">03 / 05</div>
+        <div class="service-name">Python 自动化</div>
+      </div>
+      <div>
+        <p class="service-desc">爬数据、Excel 批量处理、文件批量重命名、自动发邮件、自动办公报表。脚本带注释，你自己也能改。</p>
+        <div class="service-tags">
+          <span class="service-tag">Python 3.11</span>
+          <span class="service-tag">爬虫</span>
+          <span class="service-tag">pandas</span>
+          <span class="service-tag">openpyxl</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-item">
+      <div>
+        <div class="service-num">04 / 05</div>
+        <div class="service-name">微信小游戏</div>
+      </div>
+      <div>
+        <p class="service-desc">答题闯关、休闲小游戏、H5 活动（节日营销、抽签、测试）。不需要版号，个人也能上线。</p>
+        <div class="service-tags">
+          <span class="service-tag">微信开发者工具</span>
+          <span class="service-tag">Canvas</span>
+          <span class="service-tag">小游戏</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-item">
+      <div>
+        <div class="service-num">05 / 05</div>
+        <div class="service-name">Luanti/我的世界机器人</div>
+      </div>
+      <div>
+        <p class="service-desc">在 Luanti（原 Minetest）里做 AI 机器人：自动挖矿、自动打怪、自动盖房子、陪玩。给服主用的 Mod 形式分发。</p>
+        <div class="service-tags">
+          <span class="service-tag">Lua</span>
+          <span class="service-tag">Luanti Mod</span>
+          <span class="service-tag">Minecraft 兼容</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ 作品区 ============ -->
+<section class="works" id="works">
+  <div class="container">
+    <div class="section-title">WORKS</div>
+    <h2 class="section-h2">做过的作品</h2>
+    <p class="section-desc">下面这些都是真实可运行的，源码 + 教程都能给你。</p>
+
+    <div class="works-grid">
+      <div class="work-card">
+        <div class="work-preview g1">
+          <span class="icon">🐍</span>
+        </div>
+        <div class="work-info">
+          <h3>贪吃蛇小游戏</h3>
+          <p>经典 HTML5 贪吃蛇，键盘控制 + 计分系统 + 暂停功能</p>
+          <div class="tech">HTML5 · Canvas · JavaScript</div>
+        </div>
+      </div>
+
+      <div class="work-card">
+        <div class="work-preview g2">
+          <span class="icon">⚫</span>
+        </div>
+        <div class="work-info">
+          <h3>五子棋（人机对战）</h3>
+          <p>带 AI 算法的五子棋，3 档难度，电脑会下棋</p>
+          <div class="tech">HTML5 · Canvas · AI 算法</div>
+        </div>
+      </div>
+
+      <div class="work-card">
+        <div class="work-preview g3">
+          <span class="icon">2 + 2</span>
+        </div>
+        <div class="work-info">
+          <h3>2048 数字合并</h3>
+          <p>经典 2048 玩法，配色还原原版，键盘控制</p>
+          <div class="tech">HTML5 · CSS Grid · JavaScript</div>
+        </div>
+      </div>
+
+      <div class="work-card">
+        <div class="work-preview g4">
+          <span class="icon">🍎</span>
+        </div>
+        <div class="work-info">
+          <h3>记忆翻牌</h3>
+          <p>4x4 卡片配对游戏，锻炼记忆力</p>
+          <div class="tech">HTML5 · CSS3 · JavaScript</div>
+        </div>
+      </div>
+
+      <div class="work-card">
+        <div class="work-preview g5">
+          <span class="icon">📦</span>
+        </div>
+        <div class="work-info">
+          <h3>APK 打包工作流</h3>
+          <p>Godot/Unity 项目 → 安卓 APK 一键打包脚本</p>
+          <div class="tech">Python · Bash · Android SDK</div>
+        </div>
+      </div>
+
+      <div class="work-card">
+        <div class="work-preview g6">
+          <span class="icon">🤖</span>
+        </div>
+        <div class="work-info">
+          <h3>Luanti AI 机器人</h3>
+          <p>在 Luanti 游戏里通过聊天控制 AI 自动挖矿/打怪/盖房子</p>
+          <div class="tech">Lua · Luanti Mod · Python 控制台</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 流程区 ============ -->
+<section class="process" id="process">
+  <div class="container">
+    <div class="section-title">PROCESS</div>
+    <h2 class="section-h2">怎么合作</h2>
+    <p class="section-desc">4 步搞定，不绕弯子。</p>
+
+    <div class="process-grid">
+      <div class="process-step">
+        <div class="process-num">1</div>
+        <h3>加 QQ 咨询</h3>
+        <p>加好友备注"接单"，简单说你要做什么，发参考图/链接更好。</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num">2</div>
+        <h3>报价 + 工期</h3>
+        <p>我评估后给报价和交付时间。简单需求当场报，复杂的需求 1-2 天内回复。</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num">3</div>
+        <h3>开发 + 中途确认</h3>
+        <p>开发过程中关键节点发截图/录屏给你确认，避免做完不是你要的。</p>
+      </div>
+      <div class="process-step">
+        <div class="process-num">4</div>
+        <h3>交付 + 3 月内改</h3>
+        <p>部署上线给你链接/包。3 个月内小问题免费改。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="section-title">FAQ</div>
+    <h2 class="section-h2">常见问题</h2>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">9.9 元的单子真能做吗？会不会偷工减料？</div>
+        <div class="faq-a">9.9 元是简单单（比如改个样式、部署上线、写个小脚本），1-2 小时能做完。复杂需求会按工作量报价，一般 50-500 元。看具体需求。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">多久能交付？</div>
+        <div class="faq-a">简单单（部署、修 bug、小脚本）当天到 1 天。标准单（落地页、小游戏、APK 打包）1-3 天。复杂定制（完整网站、多功能系统）3-7 天。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">不满意能退吗？</div>
+        <div class="faq-a">能。交付后 7 天内不满意全额退，不需要理由。3 个月内小问题免费改（不超过 3 次）。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">能给源码吗？</div>
+        <div class="faq-a">能给。所有项目源码归你，可以商用、可以改。代码带注释，不会写也能改。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">学生党/学生作业有优惠吗？</div>
+        <div class="faq-a">有。课设/作业类需求 7 折，发学生证/学信网截图即可。计算机相关专业优先。</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">怎么付款？</div>
+        <div class="faq-a">50% 订金开工，交付后付尾款。100 元以下的小单一次性付清。微信/支付宝/QQ 钱包都行。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 联系 ============ -->
+<section class="contact" id="contact">
+  <h2>开始聊吧</h2>
+  <p>简单说你要做什么就行，复杂的发参考图/链接更好</p>
+  <a class="qq-large" href="tencent://message/?uin=484928402&Site=&Menu=yes">
+    QQ 484928402
+  </a>
+  <div class="qq-tip">点上面直接发起聊天 · 加好友请备注"接单"</div>
+  <div class="price-from">起步价 <strong>9.9 元</strong> · 复杂需求按工作量报价</div>
+</section>
+
+<footer>
+  接单服务 · 9.9 元起 · 认真做活
+</footer>
+
+<script>
+// FAQ 折叠
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => {
+    q.parentElement.classList.toggle('open');
+  });
+});
+
+// 平滑滚动
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// 滚动渐入
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('section').forEach(s => {
+  s.style.opacity = '0';
+  s.style.transform = 'translateY(20px)';
+  s.style.transition = 'opacity 0.6s, transform 0.6s';
+  observer.observe(s);
+});
+// 第一个 section 立即显示
+document.querySelector('.hero').style.opacity = '1';
+document.querySelector('.hero').style.transform = 'none';
+</script>
+
+</body>
+</html>
