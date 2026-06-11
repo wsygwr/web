@@ -174,12 +174,31 @@
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
   }
   .work-card:hover {
     border-color: #d0d0d0;
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0,0,0,0.06);
   }
+  .work-card::after {
+    content: "试玩 →";
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .work-card:hover::after { opacity: 1; }
   .work-preview {
     aspect-ratio: 4/3;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -468,7 +487,7 @@
     <p class="section-desc">下面这些都是真实可运行的，源码 + 教程都能给你。</p>
 
     <div class="works-grid">
-      <div class="work-card">
+      <a class="work-card" href="game/snake.html" target="_blank">
         <div class="work-preview g1">
           <span class="icon">🐍</span>
         </div>
@@ -477,20 +496,20 @@
           <p>经典 HTML5 贪吃蛇，键盘控制 + 计分系统 + 暂停功能</p>
           <div class="tech">HTML5 · Canvas · JavaScript</div>
         </div>
-      </div>
+      </a>
 
-      <div class="work-card">
+      <a class="work-card" href="game/gobang.html" target="_blank">
         <div class="work-preview g2">
           <span class="icon">⚫</span>
         </div>
         <div class="work-info">
           <h3>五子棋（人机对战）</h3>
-          <p>带 AI 算法的五子棋，3 档难度，电脑会下棋</p>
+          <p>带 AI 算法的五子棋，电脑会下棋</p>
           <div class="tech">HTML5 · Canvas · AI 算法</div>
         </div>
-      </div>
+      </a>
 
-      <div class="work-card">
+      <a class="work-card" href="game/game2048.html" target="_blank">
         <div class="work-preview g3">
           <span class="icon">2 + 2</span>
         </div>
@@ -499,9 +518,9 @@
           <p>经典 2048 玩法，配色还原原版，键盘控制</p>
           <div class="tech">HTML5 · CSS Grid · JavaScript</div>
         </div>
-      </div>
+      </a>
 
-      <div class="work-card">
+      <a class="work-card" href="game/memory.html" target="_blank">
         <div class="work-preview g4">
           <span class="icon">🍎</span>
         </div>
@@ -510,7 +529,7 @@
           <p>4x4 卡片配对游戏，锻炼记忆力</p>
           <div class="tech">HTML5 · CSS3 · JavaScript</div>
         </div>
-      </div>
+      </a>
 
       <div class="work-card">
         <div class="work-preview g5">

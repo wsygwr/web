@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>记忆翻牌 · Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    min-height: 100vh;
+    font-family: "Microsoft YaHei", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: #fff;
+  }
+  .nav { margin-bottom: 20px; align-self: flex-start; }
+  .nav a { color: #fff; text-decoration: none; background: rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 6px; font-size: 14px; }
+  h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .info { display: flex; gap: 30px; margin-bottom: 20px; font-size: 16px; }
+  .info b { font-size: 22px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 80px);
+    grid-template-rows: repeat(4, 90px);
+    gap: 10px;
+  }
+  @media (max-width: 400px) {
+    .grid { grid-template-columns: repeat(4, 70px); grid-template-rows: repeat(4, 78px); }
+  }
+  .card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 36px;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.3s, background 0.3s;
+    position: relative;
+  }
+  .card.flipped { background: #fff; border: 2px solid #2ecc71; }
+  .card.matched { background: #2ecc71; }
+  .card .back { display: block; color: #fff; font-weight: bold; }
+  .card.flipped .back, .card.matched .back { display: none; }
+  .card .front { display: none; }
+  .card.flipped .front, .card.matched .front { display: block; }
+  button { margin-top: 20px; padding: 10px 24px; background: #fff; color: #2ecc71; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; }
+  .tip { margin-top: 12px; font-size: 13px; opacity: 0.9; }
+</style>
+</head>
+<body>
+  <div class="nav"><a href="../index.html">← 返回接单页</a></div>
+  <h1>记忆翻牌</h1>
+  <div class="info">
+    <div>步数: <b id="moves">0</b></div>
+    <div>用时: <b id="time">0</b> 秒</div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <button onclick="init()">重新开始</button>
+  <div class="tip">翻到 2 张相同图案就配对，配对 8 对就赢</div>
+<script>
+const ICONS = ['🍎','🍌','🍇','🍓','🍑','🍒','🥝','🍍'];
+let cards, flipped, moves, matched, lock, timer, seconds;
+const grid = document.getElementById('grid');
+const movesEl = document.getElementById('moves');
+const timeEl = document.getElementById('time');
+function init() {
+  const deck = [...ICONS, ...ICONS]
+    .sort(() => Math.random() - 0.5)
+    .map((icon, i) => ({ id: i, icon, flipped: false, matched: false }));
+  cards = deck; flipped = []; moves = 0; matched = 0; lock = false; seconds = 0;
+  movesEl.textContent = '0'; timeEl.textContent = '0';
+  if (timer) clearInterval(timer);
+  timer = setInterval(() => { seconds++; timeEl.textContent = seconds; }, 1000);
+  render();
+}
+function render() {
+  grid.innerHTML = '';
+  cards.forEach((c, idx) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    if (c.matched) div.classList.add('matched');
+    if (c.flipped || c.matched) div.classList.add('flipped');
+    div.innerHTML = `<span class="back">?</span><span class="front">${c.icon}</span>`;
+    div.onclick = () => flip(idx);
+    grid.appendChild(div);
+  });
+}
+function flip(idx) {
+  if (lock) return;
+  const c = cards[idx];
+  if (c.flipped || c.matched) return;
+  c.flipped = true; render();
+  flipped.push(idx);
+  if (flipped.length === 2) {
+    moves++; movesEl.textContent = moves;
+    const [a, b] = flipped;
+    if (cards[a].icon === cards[b].icon) {
+      cards[a].matched = cards[b].matched = true; flipped = []; matched += 2;
+      render();
+      if (matched === 16) {
+        clearInterval(timer);
+        setTimeout(() => alert('🎉 全部配对成功！\n步数: ' + moves + '\n用时: ' + seconds + ' 秒'), 300);
+      }
+    } else {
+      lock = true;
+      setTimeout(() => { cards[a].flipped = cards[b].flipped = false; flipped = []; lock = false; render(); }, 1000);
+    }
+  }
+}
+init();
+</script>
+</body>
+</html>
