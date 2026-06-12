@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>养成 · 朱子昊</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Microsoft YaHei", -apple-system, sans-serif;
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ============ 整张图铺满（无背景） ============ */
+  .stage { position: fixed; inset: 0; overflow: hidden; }
+
+  /* 角色图片作为页面背景（铺满） */
+  .bg-full {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: url('char.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* 时段调色 */
+    transition: filter 1.5s;
+  }
+  body.morning .bg-full { filter: brightness(1.1) saturate(1.1) hue-rotate(-10deg); }
+  body.noon .bg-full { filter: brightness(1.05) saturate(1.2); }
+  body.evening .bg-full { filter: brightness(0.85) saturate(1.3) hue-rotate(15deg); }
+  body.night .bg-full { filter: brightness(0.55) saturate(0.7) hue-rotate(20deg); }
+
+  /* 整页遮罩已删除 — 图片直接铺满 */
+
+  /* 角色立绘区（小头像在右上角） */
+  .character-stage {
+    position: fixed;
+    top: 90px;
+    right: 14px;
+    width: 80px;
+    height: 80px;
+    z-index: 10;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid rgba(255,255,255,0.4);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    transition: filter 0.5s;
+  }
+  body.night .character-stage { filter: brightness(0.7) saturate(0.8); }
+  body.angry .character-stage { filter: hue-rotate(-15deg) saturate(1.3); }
+  body.happy .character-stage { filter: brightness(1.05) saturate(1.2); }
+  body.shy .character-stage { filter: hue-rotate(20deg) brightness(1.1); }
+  .character-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 30%;
+    animation: charIdle 3s ease-in-out infinite;
+    cursor: pointer;
+  }@keyframes charIdle {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-4px) scale(1.01); }
+  }
+  .character-img:active {
+    animation: charTalk 0.4s ease;
+  }
+  @keyframes charTalk {
+    0%, 100% { transform: scale(1.01) translateY(-4px); }
+    30% { transform: scale(1.06) translateY(-10px) rotate(-2deg); }
+    60% { transform: scale(1.04) translateY(-6px) rotate(2deg); }
+  }
+
+  .floating-hearts { position: absolute; inset: 0; pointer-events: none; z-index: 12; }
+  .heart {
+    position: absolute; font-size: 28px;
+    animation: heartFloat 3s ease-out forwards;
+    opacity: 0;
+  }
+  @keyframes heartFloat {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    20% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--tx), -200px) scale(1.2) rotate(20deg); }
+  }
+
+  .sparkle-layer { position: absolute; inset: 0; pointer-events: none; z-index: 11; display: none; }
+  body.shy .sparkle-layer { display: block; }
+  .sparkle {
+    position: absolute; width: 6px; height: 6px;
+    background: #fbbf24; border-radius: 50%;
+    box-shadow: 0 0 10px #fbbf24;
+    animation: sparkleAnim 1.5s ease-in-out infinite;
+  }
+  @keyframes sparkleAnim {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+  .sparkle:nth-child(1) { top: 15%; left: 15%; animation-delay: 0s; }
+  .sparkle:nth-child(2) { top: 25%; right: 15%; animation-delay: 0.3s; }
+  .sparkle:nth-child(3) { top: 50%; left: 5%; animation-delay: 0.6s; }
+  .sparkle:nth-child(4) { top: 60%; right: 5%; animation-delay: 0.9s; }
+  .sparkle:nth-child(5) { top: 80%; left: 45%; animation-delay: 1.2s; }
+
+  /* ============ 顶部接单入口 ============ */
+  .top-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 30;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 100%);
+  }
+  .top-bar .back-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 12px;
+    background: rgba(0,0,0,0.3);
+    padding: 6px 12px;
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .top-bar .order-link {
+    color: #fbbf24;
+    text-decoration: none;
+    font-size: 12px;
+    background: linear-gradient(135deg, rgba(251,191,36,0.2) 0%, rgba(236,72,153,0.2) 100%);
+    padding: 6px 12px;
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(251,191,36,0.4);
+    font-weight: 600;
+  }
+  .top-bar .order-link::before { content: "💼 "; }
+
+  /* HUD */
+  .hud {
+    position: fixed;
+    top: 50px;
+    left: 14px;
+    z-index: 20;
+  }
+  .hud-box {
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #cbd5e0;
+    min-width: 130px;
+  }
+  .hud-box .label { color: #94a3b8; font-size: 10px; }
+  .hud-box .val { color: #fbbf24; font-weight: bold; font-size: 14px; }
+  .affection-bar { width: 100%; height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; margin-top: 4px; overflow: hidden; }
+  .affection-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #fda4af 0%, #ec4899 50%, #be185d 100%);
+    transition: width 0.5s;
+    width: 50%;
+  }
+  .affection-stage { color: #ec4899; font-size: 11px; margin-top: 2px; }
+
+  .hud-right {
+    position: fixed;
+    top: 50px;
+    right: 14px;
+    z-index: 20;
+    text-align: right;
+  }
+  .hud-time { font-size: 12px; color: #cbd5e0; background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 6px; }
+  .hud-status { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+  /* 音乐按钮 */
+  .music-btn {
+    position: fixed;
+    right: 14px;
+    top: 110px;
+    width: 36px; height: 36px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 25;
+    backdrop-filter: blur(8px);
+  }
+
+  /* ============ 底部快捷按钮 ============ */
+  .quick-actions {
+    position: fixed;
+    bottom: 140px;
+    left: 0; right: 0;
+    z-index: 15;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 14px;
+  }
+  .quick-btn {
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 50%;
+    width: 48px; height: 48px;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .quick-btn:active { transform: scale(0.9); }
+  .quick-btn .badge {
+    position: absolute;
+    top: 2px; right: 2px;
+    font-size: 9px;
+    background: #fbbf24;
+    color: #000;
+    border-radius: 8px;
+    padding: 0 4px;
+    font-weight: bold;
+  }
+
+  /* ============ Galgame 对话框 ============ */
+  .dialog-box {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 20;
+    background: linear-gradient(180deg, rgba(15, 20, 35, 0.85) 0%, rgba(15, 20, 35, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 14px 20px 16px;
+    min-height: 130px;
+  }
+  .char-name {
+    display: inline-block;
+    background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+    color: #fff;
+    padding: 4px 14px;
+    border-radius: 6px 6px 6px 0;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+  .dialog-text {
+    color: #fff;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 50px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+  /* ============ 底部接单横幅 ============ */
+  .upsell-bar {
+    position: fixed;
+    bottom: 132px;
+    left: 0; right: 0;
+    z-index: 18;
+    background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+    padding: 8px 14px;
+    text-align: center;
+    font-size: 12px;
+    color: #fff;
+    display: none;
+  }
+  .upsell-bar.show { display: block; }
+  .upsell-bar a {
+    color: #fff;
+    font-weight: bold;
+    text-decoration: none;
+    border-bottom: 1px dashed #fff;
+  }
+
+  /* ============ 全部动作菜单 ============ */
+  .all-actions {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .all-actions.show { display: flex; }
+  .all-actions-box {
+    background: linear-gradient(180deg, rgba(15, 20, 35, 0.95) 0%, rgba(15, 20, 35, 0.98) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 400px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .all-actions-title { color: #fbbf24; font-size: 14px; text-align: center; margin-bottom: 12px; }
+  .all-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .all-actions-grid .action-btn {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 4px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .all-actions-grid .action-btn .icon { font-size: 22px; }
+  .all-actions-grid .action-btn .delta { font-size: 9px; color: #fbbf24; }
+  .all-actions-grid .action-btn.negative .delta { color: #ef4444; }
+
+  /* 浮动数字 */
+  .float-num {
+    position: fixed;
+    top: 35%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 35;
+    animation: floatUp 1.5s ease-out forwards;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  @keyframes floatUp {
+    0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, -80%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -200%) scale(1); }
+  }
+
+  /* 剧情选项 */
+  .choice-overlay {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(0,0,0,0.5);
+    display: none; align-items: center; justify-content: center;
+  }
+  .choice-overlay.show { display: flex; }
+  .choice-box {
+    background: linear-gradient(180deg, rgba(15, 20, 35, 0.95) 0%, rgba(15, 20, 35, 0.98) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 360px;
+    width: 90%;
+  }
+  .choice-title { color: #fbbf24; font-size: 14px; margin-bottom: 16px; text-align: center; }
+  .choice-option {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .choice-option:hover, .choice-option:active {
+    background: rgba(99, 102, 241, 0.5);
+    transform: translateX(4px);
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="bg-full" id="bgFull"></div>
+</div>
+
+<div class="character-stage">
+  <div class="sparkle-layer" id="sparkleLayer"></div>
+  <div class="floating-hearts" id="floatingHearts"></div>
+  <img src="char.jpg" alt="朱子昊" class="character-img" id="charImg">
+</div>
+
+<div class="top-bar">
+  <a class="back-link" href="https://heroic-kataifi-c0dcd3.netlify.app/" target="_blank">← 接单服务</a>
+  <a class="order-link" href="https://heroic-kataifi-c0dcd3.netlify.app/" target="_blank">接单服务 9.9 元起</a>
+</div>
+
+<div class="hud">
+  <div class="hud-box">
+    <div class="label">❤️ 好感</div>
+    <div class="val" id="affectionVal">50/100</div>
+    <div class="affection-bar"><div class="affection-fill" id="affectionFill"></div></div>
+    <div class="affection-stage" id="affectionStage">陌生人</div>
+  </div>
+</div>
+<div class="hud-right">
+  <div class="hud-time" id="timeText">早安 · 第 1 天</div>
+  <div class="hud-status" id="statusText">正在发呆</div>
+</div>
+<button class="music-btn" id="musicBtn">♪</button>
+
+<div class="quick-actions" style="bottom:200px;">
+  <button class="quick-btn" data-action="greet">👋</button>
+  <button class="quick-btn" data-action="praise">💖</button>
+  <button class="quick-btn" data-action="touch">✋</button>
+  <button class="quick-btn" data-action="gift">🎁</button>
+  <button class="quick-btn" data-action="chat">💬</button>
+  <button class="quick-btn" id="moreBtn">⋯</button>
+</div>
+
+<div class="quick-actions" style="bottom:140px;">
+  <button class="quick-btn" data-action="tease" style="background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.3);">😏</button>
+  <button class="quick-btn" data-action="ignore" style="background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.3);">🙄</button>
+  <button class="quick-btn" data-action="scold" style="background:rgba(239,68,68,0.25);border-color:rgba(239,68,68,0.4);">😠</button>
+  <button class="quick-btn" data-action="trick" style="background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.3);">😈</button>
+</div>
+
+<div class="upsell-bar" id="upsellBar">
+  💼 想让真程序员帮你做这种游戏？<a href="https://heroic-kataifi-c0dcd3.netlify.app/" target="_blank">看接单服务 →</a>
+</div>
+
+<div class="dialog-box" id="dialogBox">
+  <div class="char-name">朱子昊</div>
+  <div class="dialog-text" id="dialogText"></div>
+</div>
+
+<div class="all-actions" id="allActions">
+  <div class="all-actions-box">
+    <div class="all-actions-title">所有动作</div>
+    <div class="all-actions-grid" id="allActionsGrid"></div>
+  </div>
+</div>
+
+<div class="choice-overlay" id="choiceOverlay">
+  <div class="choice-box" id="choiceBox"></div>
+</div>
+
+<script>
+let state = JSON.parse(localStorage.getItem('zihuGame') || 'null') || {
+  affection: 15,  // 初始低
+  mood: 'normal',
+  energy: 100,
+  day: 1,
+  lastVisit: Date.now(),
+  recentActions: [],
+  lastActions: {},
+  musicOn: false,
+  _shownChoices: [],
+};
+
+function save() { localStorage.setItem('zihuGame', JSON.stringify(state)); }
+function reset() {
+  if (confirm('确定要清空存档从头开始吗？')) {
+    localStorage.removeItem('zihuGame');
+    location.reload();
+  }
+}
+
+function getTimePeriod() {
+  const h = new Date().getHours();
+  if (h < 6) return 'night';
+  if (h < 11) return 'morning';
+  if (h < 18) return 'noon';
+  if (h < 22) return 'evening';
+  return 'night';
+}
+function getGreeting() {
+  return { morning: '早安', noon: '午安', evening: '晚安', night: '夜深了' }[getTimePeriod()];
+}
+function getStage(aff) {
+  if (aff < 20) return '陌生人';
+  if (aff < 40) return '认识中';
+  if (aff < 60) return '熟人';
+  if (aff < 75) return '朋友';
+  if (aff < 90) return '暧昧';
+  return '恋人';
+}
+function getMood(aff) {
+  if (aff < 20) return 'angry';
+  if (aff < 40) return 'normal';
+  if (aff < 60) return 'tsundere';
+  if (aff < 80) return 'happy';
+  return 'shy';
+}
+function getStatusText(mood) {
+  return {
+    angry: '正生着气', normal: '正在发呆', tsundere: '假装不在意',
+    happy: '有点开心', shy: '害羞中',
+  }[mood];
+}
+
+// ============ 对话库（真人语气） ============
+const DIALOGS = {
+  morning: {
+    greet: [
+      { jp: 'ん…？来たの。', zh: '嗯…？你来了啊。' },
+      { jp: 'あ、おはよう。', zh: '哦，早。' },
+      { jp: 'ふぁ…こんな朝早く何。', zh: '哈啊…你起这么早干嘛。' },
+      { jp: 'ん…おはよう。今日何かあるの。', zh: '嗯…早。今天有什么想说的吗。' },
+      { jp: 'あ、来た。', zh: '哎，你来了。' },
+      { jp: 'え…何の用。', zh: '呃…你要干嘛。' },
+      { jp: 'んん。', zh: '嗯嗯。' },
+      { jp: '…おはよう？', zh: '…早安？' },
+    ],
+    praise: [
+      { jp: '…え？', zh: '…啊？' },
+      { jp: 'な、なんで急に。', zh: '你、你突然说这个干嘛。' },
+      { jp: 'ん、また。', zh: '哼，又哄我。' },
+      { jp: '…いいよ、受け取る。', zh: '…行吧，收下了。' },
+      { jp: '今日薬でも飲んだ？', zh: '你今天吃错药了？' },
+      { jp: '…ち、ちがう、褒めてほしくてこうしてるんじゃない。', zh: '…不、不是要你夸我才这样的。' },
+      { jp: 'は？', zh: '哈？' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    touch: [
+      { jp: 'んっ…！', zh: '唔…！' },
+      { jp: 'な、なんでそこ触るの。', zh: '你、你手放哪呢。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: 'だ、触んないで。', zh: '别、别乱摸。' },
+      { jp: 'ん…もう触ったら怒るよ。', zh: '嗯…再摸就生气了。' },
+      { jp: 'な、何してるの。', zh: '你…你干嘛啊。' },
+      { jp: '…いいよ。', zh: '…行吧。' },
+      { jp: '…え？', zh: '…哈？' },
+    ],
+    tease: [
+      { jp: '子供っぽい。', zh: '幼稚。' },
+      { jp: '…もう一度やってみなさいよ。', zh: '你…你再这样试试。' },
+      { jp: '…いいわ、すごいすごい。', zh: '…行，你厉害。' },
+      { jp: 'ちっ。', zh: '切。' },
+      { jp: '…ん。', zh: '…哼。' },
+      { jp: '…喧嘩売るの？', zh: '你…想吵架？' },
+      { jp: '…知らない。', zh: '…懒得理你。' },
+      { jp: '…もういいでしょ。', zh: '…你够了啊。' },
+    ],
+    gift: [
+      { jp: '…私に？', zh: '…给我的？' },
+      { jp: 'ん…いいよ。', zh: '嗯…行吧。' },
+      { jp: '…またお金使ってる。', zh: '你…又乱花钱。' },
+      { jp: '…ありがと。', zh: '…谢谢。' },
+      { jp: 'ん、もらっとく。', zh: '哼，那我收下了。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…覚えてるからね。', zh: '…我会记着的。' },
+      { jp: 'あー…こうやって慣れるんだ。', zh: '哎…你这样我会习惯的。' },
+    ],
+    chat: [
+      { jp: '言って。', zh: '你说。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: 'で。', zh: '然后呢。' },
+      { jp: 'ん…聞いてる。', zh: '嗯…我听着。' },
+      { jp: '…あ。', zh: '…哦。' },
+      { jp: '…本当に？', zh: '…真的？' },
+      { jp: 'は？', zh: '哈？' },
+      { jp: '…何言えばいいかわかんない。', zh: '…我也不知道说什么。' },
+    ],
+    watch: [
+      { jp: 'ん…いいよ。', zh: '嗯…行。' },
+      { jp: '選んで。', zh: '你选。' },
+      { jp: '…どっちでもいい。', zh: '…我无所谓。' },
+      { jp: '…何が見たいの。', zh: '你想看什么…？' },
+      { jp: '…付き合うよ。', zh: '…我陪你。' },
+      { jp: 'ん…いいよ。', zh: '嗯…好。' },
+      { jp: '…じゃ、始めよう。', zh: '…那开始吧。' },
+      { jp: '…見てるだけでいい。', zh: '…你看就行。' },
+    ],
+    teach: [
+      { jp: 'わ、わかってる！', zh: '我…我知道！' },
+      { jp: 'な、教えるの？', zh: '你、你教我做事？' },
+      { jp: '…ん。', zh: '…哼。' },
+      { jp: '…ちょっと分かるかも。', zh: '…好像有点道理。' },
+      { jp: '私どこが駄目なの。', zh: '我哪里不行了。' },
+      { jp: '…ん、私も出来る。', zh: '…哼，我也会的。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…あんたがすごいんだろ。', zh: '你…你厉害行了吧。' },
+    ],
+    homework: [
+      { jp: '…いいよ。', zh: '…行吧。' },
+      { jp: 'ん…ありがと。', zh: '嗯…谢了。' },
+      { jp: '…助けてくれたら何か奢る。', zh: '你帮我…我请你吃东西。' },
+      { jp: '…いいよ。', zh: '…不用啦。' },
+      { jp: '…自分でやる。', zh: '…我自己会。' },
+      { jp: '…ん、次はいい。', zh: '…嗯，下次不用了。' },
+      { jp: '…なんで助けてくれるの。', zh: '…你为什么帮我。' },
+      { jp: '…慣れた。', zh: '…习惯了。' },
+    ],
+    game: [
+      { jp: '来い！', zh: '来！' },
+      { jp: 'ん…来い。', zh: '嗯…来。' },
+      { jp: '負けて泣くなよ。', zh: '输了别哭。' },
+      { jp: 'ん、私のプレイ見せてあげる。', zh: '哼，看我操作。' },
+      { jp: '…来い。', zh: '…来。' },
+      { jp: '…いいよ。', zh: '…行。' },
+      { jp: '後悔するなよ。', zh: '你别后悔。' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    sleep: [
+      { jp: '…ん、おやすみ。', zh: '…嗯，晚安。' },
+      { jp: 'ん…また明日。', zh: '嗯…明天见。' },
+      { jp: '…会いたいよ。', zh: '…我会想你的。' },
+      { jp: '…いい夢を。', zh: '…好梦。' },
+      { jp: '…あなたも。', zh: '…你也是。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…行かないで。', zh: '…不要走。' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    kiss: [
+      { jp: '…っ！', zh: '…！' },
+      { jp: 'な、なに！', zh: '你、你！' },
+      { jp: '…', zh: '…' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…もっと。', zh: '…还要。' },
+      { jp: '…なんで。', zh: '…你怎么…' },
+      { jp: '…いじわる。', zh: '…你欺负人。' },
+      { jp: '…あ、わたしも…いや何でもない。', zh: '…我、我也…算了不说了。' },
+    ],
+  },
+  noon: {
+    greet: [
+      { jp: 'ん…来た。', zh: '嗯…你来了。' },
+      { jp: 'あー…まだいたんだ。', zh: '哎…你还在啊。' },
+      { jp: 'ん…食べた？', zh: '嗯…你吃了吗。' },
+      { jp: '…あ。', zh: '…哦。' },
+      { jp: '…何か用？', zh: '…你有什么事。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…来た？', zh: '…来了？' },
+      { jp: '…用事？', zh: '…有事？' },
+    ],
+    praise: [
+      { jp: '…また褒める。', zh: '…又夸我。' },
+      { jp: 'ん…いいよ。', zh: '嗯…行吧。' },
+      { jp: '…ん。', zh: '…哼。' },
+      { jp: '…受け取った。', zh: '…收下了。' },
+      { jp: '…またそうやって。', zh: '你…你又这样。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…今日なんでそんな口上手いの。', zh: '…你今天怎么这么会说话。' },
+      { jp: '…は？', zh: '…哈？' },
+    ],
+    touch: [
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…手、あったかい。', zh: '你…你手好暖。' },
+      { jp: '…触んないで。', zh: '…别乱摸。' },
+      { jp: '…触ったら…', zh: '…再摸就…' },
+      { jp: 'ん…何…', zh: '嗯…你…' },
+      { jp: '…何するの。', zh: '…你干嘛。' },
+      { jp: '…は？', zh: '…哈？' },
+      { jp: '…真っ昼間から…', zh: '…大白天的…' },
+    ],
+    tease: [
+      { jp: '…ちっ。', zh: '…切。' },
+      { jp: '…もういいでしょ。', zh: '…你够了。' },
+      { jp: '子供っぽい。', zh: '幼稚鬼。' },
+      { jp: '…ん。', zh: '…你…哼。' },
+      { jp: '…はいはい、すごいね。', zh: '…行行行，你厉害。' },
+      { jp: '…ちょっと一人にして。', zh: '…我想静静。' },
+      { jp: '…', zh: '…你…' },
+      { jp: '…知らない。', zh: '…懒得理。' },
+    ],
+    gift: [
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…また？', zh: '…又送？' },
+      { jp: '…覚えてるから。', zh: '…我会记得的。' },
+      { jp: '…いいよ。', zh: '…行。' },
+      { jp: '…ありがと。', zh: '…谢谢。' },
+      { jp: '…私に優しいね。', zh: '…你…对我真好。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…受け取った。', zh: '…收下了。' },
+    ],
+    chat: [
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '言って。', zh: '你说。' },
+      { jp: '…あ。', zh: '…哦。' },
+      { jp: '…で？', zh: '…然后呢？' },
+      { jp: '…聞いてる。', zh: '…嗯…我听着。' },
+      { jp: '…本当に？', zh: '…真的？' },
+      { jp: '…は？', zh: '…哈？' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    watch: [
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '選んで。', zh: '你选。' },
+      { jp: '…付き合うよ。', zh: '…我陪你。' },
+      { jp: '…いいよ。', zh: '…好。' },
+      { jp: '…ん。', zh: '…行。' },
+      { jp: '…じゃ、始めよう。', zh: '…那开始吧。' },
+      { jp: '…まかせる。', zh: '…你说了算。' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    teach: [
+      { jp: '…分かった。', zh: '…我知道了。' },
+      { jp: '…ん。', zh: '…哼。' },
+      { jp: '…合ってるかも。', zh: '…好像对。' },
+      { jp: '…いいよ。', zh: '…行吧。' },
+      { jp: '…私も出来るけど。', zh: '…我也会的。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…すごいね、あんた。', zh: '…你…厉害。' },
+      { jp: '…ん。', zh: '…哼。' },
+    ],
+    homework: [
+      { jp: '…ん、ありがと。', zh: '…嗯，谢。' },
+      { jp: '…奢るよ。', zh: '…我请你。' },
+      { jp: '…なんで助けてくれるの。', zh: '…你为什么帮我。' },
+      { jp: '…いいよ。', zh: '…不用啦。' },
+      { jp: '…自分でやる。', zh: '…我自己会。' },
+      { jp: '…次はいい。', zh: '…下次不用了。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…慣れた。', zh: '…习惯了。' },
+    ],
+    game: [
+      { jp: '来い！', zh: '来！' },
+      { jp: '…来い。', zh: '…来。' },
+      { jp: '…いいよ。', zh: '…行。' },
+      { jp: 'ん。', zh: '哼。' },
+      { jp: '…後悔するなよ。', zh: '…你别后悔。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…来い。', zh: '…来。' },
+      { jp: '…OK。', zh: '…OK。' },
+    ],
+    sleep: [
+      { jp: '…お昼も寝るの？', zh: '…中午也睡？' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…いい夢を。', zh: '…做个好梦。' },
+      { jp: '…付き合うよ。', zh: '…我陪你。' },
+      { jp: '…いいよ。', zh: '…好。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…あなたも。', zh: '…你也是。' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    kiss: [
+      { jp: '…っ！', zh: '…！' },
+      { jp: '…何…', zh: '…你…' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…もっと。', zh: '…还要。' },
+      { jp: '…何…！', zh: '…你…！' },
+      { jp: '…なんで。', zh: '…怎么。' },
+      { jp: '…あ。', zh: '…哦。' },
+      { jp: '…だめ。…いや、いい。', zh: '…不要。…算了。' },
+    ],
+  },
+  evening: {
+    greet: [
+      { jp: '…来た。', zh: '…你来了。' },
+      { jp: '…ん…帰った？', zh: '…嗯…回来了？' },
+      { jp: '…こんばんは。', zh: '…晚上好。' },
+      { jp: '…ん…今日疲れた？', zh: '…嗯…你今天累吗。' },
+      { jp: '…あ、来た。', zh: '…哦，你来了。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…今日なんで早いの。', zh: '…你今天怎么这么早。' },
+      { jp: '…ご飯食べた？', zh: '…你…你吃饭了吗。' },
+    ],
+    praise: [
+      { jp: '…なんでそんな口上手いの。', zh: '…你…怎么这么会说话。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…慣れる…やだ。', zh: '…我会习惯的…不要。' },
+      { jp: '…ん。', zh: '…哼。' },
+      { jp: '…受け取った。', zh: '…收下了。' },
+      { jp: '…ありがと。', zh: '…你…谢谢。' },
+      { jp: '…今日どうしたの。', zh: '…你今天怎么了。' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    touch: [
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…手、あったかい。', zh: '…你手好暖。' },
+      { jp: '…や、やめないで。', zh: '…别…别停。' },
+      { jp: '…もう一回。', zh: '…再摸一下。' },
+      { jp: '…何してるの。', zh: '…你…你干嘛。' },
+      { jp: '…な、何も言ってない。', zh: '…我、我没说什么。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…は？', zh: '…哈？' },
+    ],
+    tease: [
+      { jp: '…子供っぽい。', zh: '…幼稚。' },
+      { jp: '…もういいでしょ。', zh: '…你够了。' },
+      { jp: '…またそうやって。', zh: '…你…你再这样。' },
+      { jp: '…ん。', zh: '…哼。' },
+      { jp: '…分かった。', zh: '…我知道了。' },
+      { jp: '…すごいね。', zh: '…你厉害。' },
+      { jp: '…ちっ。', zh: '…切。' },
+      { jp: '…どうしたいの。', zh: '…你想怎样。' },
+    ],
+    gift: [
+      { jp: '…私に？', zh: '…给我的？' },
+      { jp: '…ん、ありがと。', zh: '…嗯…谢谢。' },
+      { jp: '…私に優しいね。', zh: '…你…你对我真好。' },
+      { jp: '…受け取った。', zh: '…我收下了。' },
+      { jp: '…覚えてるからね。', zh: '…我会记着的。' },
+      { jp: '…なんでくれるの。', zh: '…你…你为什么送我这个。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…ずっといてね。', zh: '…我会…一直在。' },
+    ],
+    chat: [
+      { jp: '…今日どうだった？', zh: '…你今天怎么样。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…言って。', zh: '…说。' },
+      { jp: '…で？', zh: '…然后呢。' },
+      { jp: '…聞いてる。', zh: '…我在听。' },
+      { jp: '…ん…ん。', zh: '…嗯…嗯。' },
+      { jp: '…続けて。', zh: '…你…继续说。' },
+      { jp: '…ん。', zh: '…你…我…嗯。' },
+    ],
+    watch: [
+      { jp: '…付き合うよ。', zh: '…我陪你。' },
+      { jp: '…近寄って…あ、いや。', zh: '…坐近一点…啊不是。' },
+      { jp: '…何が見たいの。', zh: '…你…你要看什么。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…いいよ。', zh: '…好。' },
+      { jp: '…そんな遠くに…わたし…', zh: '…别那么远…我…' },
+      { jp: '…ん。', zh: '…行。' },
+      { jp: '…まかせる。', zh: '…你说了算。' },
+    ],
+    teach: [
+      { jp: '…教えるの…学ぶ。', zh: '…你教我…我学。' },
+      { jp: '…優しいね、あんた。', zh: '…你…你真好。' },
+      { jp: '…合ってるかも。', zh: '…嗯…好像对。' },
+      { jp: '…分かった。', zh: '…我会了。' },
+      { jp: '…すごいね。', zh: '…你厉害。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…いいよ。', zh: '…行吧。' },
+      { jp: '…ありがと。', zh: '…谢谢。' },
+    ],
+    homework: [
+      { jp: '…付き合うよ。', zh: '…我陪你做。' },
+      { jp: '…ん、ありがと。', zh: '…嗯…谢。' },
+      { jp: '…なんで助けてくれるの。', zh: '…你…你为什么帮我。' },
+      { jp: '…いいよ。', zh: '…不用啦。' },
+      { jp: '…自分でやる…いや、やって。', zh: '…我自己会…算了你帮吧。' },
+      { jp: '…次はいい。', zh: '…下次不用了。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…優しいね。', zh: '…你…对我真好。' },
+    ],
+    game: [
+      { jp: '来い。', zh: '来。' },
+      { jp: '…来い。', zh: '…来。' },
+      { jp: '…いいよ。', zh: '…行。' },
+      { jp: '…後悔するなよ。', zh: '…你别后悔。' },
+      { jp: '…ん…付き合う。', zh: '…嗯…陪你。' },
+      { jp: '…すごいね、あんた。', zh: '…你…你厉害。' },
+      { jp: '…ダブルする？', zh: '…双排吗。' },
+      { jp: '…いいよ。', zh: '…好。' },
+    ],
+    sleep: [
+      { jp: '…おやすみ。', zh: '…晚安。' },
+      { jp: '…会いたい。', zh: '…我会想你的。' },
+      { jp: '…ん…いい夢を。', zh: '…嗯…好梦。' },
+      { jp: '…付き合うよ。', zh: '…我陪你。' },
+      { jp: '…行かないで。', zh: '…别走。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…おやすみ…あなたも。', zh: '…晚安…你也是。' },
+      { jp: '…寝れない。', zh: '…我睡不着。' },
+    ],
+    kiss: [
+      { jp: '…何…', zh: '…你…' },
+      { jp: '…ん…っ！', zh: '…嗯…！' },
+      { jp: '…もっと。', zh: '…还要。' },
+      { jp: '…いじわる。', zh: '…你欺负人。' },
+      { jp: '…わたしも…いや。', zh: '…我也…算了。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…', zh: '…' },
+      { jp: '…何、急に。', zh: '…你…你干嘛突然。' },
+    ],
+  },
+  night: {
+    greet: [
+      { jp: '…まだ寝てないの？', zh: '…你…你还没睡？' },
+      { jp: '…ん…わたしも寝れない。', zh: '…嗯…我也睡不着。' },
+      { jp: '…夜更け。', zh: '…夜深了。' },
+      { jp: '…どうしたの。', zh: '…你…怎么了。' },
+      { jp: '…ん…', zh: '…嗯…' },
+      { jp: '…来た。', zh: '…你…来了。' },
+      { jp: '…こんな時間に。', zh: '…这么晚。' },
+      { jp: '…わたしも。', zh: '…我…我也。' },
+    ],
+    praise: [
+      { jp: '…夜中に褒められたら…心跳早い。', zh: '…深夜被夸…心跳快。' },
+      { jp: '…そのようにしないで。', zh: '…你…别这样。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…寝れなくなる。', zh: '…我会失眠的。' },
+      { jp: '…優しくして。', zh: '…你…你温柔点。' },
+      { jp: '…受け取った。', zh: '…收下了。' },
+      { jp: '…', zh: '…你…' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    touch: [
+      { jp: '…ん…っ！', zh: '…嗯…！' },
+      { jp: '…手…', zh: '…你…你手…' },
+      { jp: '…や、やめないで。', zh: '…别…别停。' },
+      { jp: '…もう一回。', zh: '…再…再摸一下。' },
+      { jp: '…何してるの。', zh: '…你…你干嘛。' },
+      { jp: '…嫌とは言ってない。', zh: '…我…我没说不要。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…は？', zh: '…哈？' },
+    ],
+    tease: [
+      { jp: '…', zh: '…你…' },
+      { jp: '…夜中に怒らせたいの。', zh: '…深夜惹我…想怎样。' },
+      { jp: '…またそうやって。', zh: '…你…你再这样。' },
+      { jp: '…ん。', zh: '…哼。' },
+      { jp: '…いいわ、すごい。', zh: '…行，你厉害。' },
+      { jp: '…ちっ。', zh: '…切。' },
+      { jp: '…もういいでしょ。', zh: '…你够了。' },
+      { jp: '…子供っぽい。', zh: '…幼稚。' },
+    ],
+    gift: [
+      { jp: '…私に？', zh: '…给我的？' },
+      { jp: '…ん、ありがと。', zh: '…嗯…谢谢。' },
+      { jp: '…優しいね。', zh: '…你…你对我真好。' },
+      { jp: '…一生覚えてる。', zh: '…我会记一辈子。' },
+      { jp: '…ずっと…', zh: '…我…我会一直…' },
+      { jp: '…受け取った。', zh: '…收下了。' },
+      { jp: '…', zh: '…你…' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    chat: [
+      { jp: '…言って。', zh: '…你说。' },
+      { jp: '…聞いてる。', zh: '…我在听。' },
+      { jp: '…夜中の言葉…覚えてる。', zh: '…深夜的话…我会记着。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…で。', zh: '…然后呢。' },
+      { jp: '…本当に？', zh: '…真的？' },
+      { jp: '…続けて。', zh: '…你…继续。' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    watch: [
+      { jp: '…付き合うよ。', zh: '…我陪你。' },
+      { jp: '…眠くなったら肩にもたれ…あ、何でもない。', zh: '…困了就靠我…我什么都没说。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…いいよ。', zh: '…好。' },
+      { jp: '…行かないで。', zh: '…别…别走。' },
+      { jp: '…ん。', zh: '…行。' },
+      { jp: '…まかせる。', zh: '…你说了算。' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    teach: [
+      { jp: '…夜中に教えるの。', zh: '…你半夜还教我。' },
+      { jp: '…ん…学ぶ。', zh: '…嗯…我学。' },
+      { jp: '…いいよ。', zh: '…行吧。' },
+      { jp: '…分かった。', zh: '…我会了。' },
+      { jp: '…すごいね、あんた。', zh: '…你…你厉害。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…ありがと。', zh: '…谢谢。' },
+      { jp: '…優しい。', zh: '…你…真好。' },
+    ],
+    homework: [
+      { jp: '…深夜なのに…無理しないで。', zh: '…深夜还在赶…你…别太拼。' },
+      { jp: '…付き合うよ。', zh: '…我陪你。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…なんで助けてくれるの。', zh: '…你…为什么帮我。' },
+      { jp: '…いいよ。', zh: '…不用啦。' },
+      { jp: '…次はいい。', zh: '…下次不用了。' },
+      { jp: '…付き合うよ。', zh: '…我陪你。' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    game: [
+      { jp: '…来い。', zh: '…来。' },
+      { jp: '…後悔するなよ。', zh: '…你…你别后悔。' },
+      { jp: '…いいよ。', zh: '…行。' },
+      { jp: '…付き合う。', zh: '…陪你。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…眠くなったら寝ていい。', zh: '…你…困了就睡。' },
+      { jp: '…勝ったら一緒に寝よう。', zh: '…赢了一起睡。' },
+      { jp: '…ん。', zh: '…嗯。' },
+    ],
+    sleep: [
+      { jp: '…おやすみ…寝れない。', zh: '…晚安…我睡不着。' },
+      { jp: '…会いたい。', zh: '…我会想你的。' },
+      { jp: '…ん…いい夢を。', zh: '…嗯…好梦。' },
+      { jp: '…付き合うよ。', zh: '…我陪你。' },
+      { jp: '…おやすみ…行かないで。', zh: '…晚安…不要走。' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…あなたも。', zh: '…你也是。' },
+      { jp: '…おやすみ言いたくない。', zh: '…舍不得说晚安。' },
+    ],
+    kiss: [
+      { jp: '…', zh: '…' },
+      { jp: '…ん。', zh: '…嗯。' },
+      { jp: '…あなたはわたしの。', zh: '…你…你是我的。' },
+      { jp: '…好き。', zh: '…我…我喜欢你。' },
+      { jp: '…', zh: '…' },
+      { jp: '…やめないで。', zh: '…别停。' },
+      { jp: '…ん…っ！', zh: '…嗯…！' },
+      { jp: '…', zh: '…' },
+    ],
+  },
+};
+
+const ACTIONS = [
+  { id: 'greet', icon: '👋', label: '打招呼', base: 1 },
+  { id: 'praise', icon: '💖', label: '夸他', base: 2 },
+  { id: 'touch', icon: '✋', label: '摸头', base: 2 },
+  { id: 'tease', icon: '😏', label: '惹他', base: -1, negative: true },
+  { id: 'ignore', icon: '🙄', label: '不理他', base: -1, negative: true },
+  { id: 'scold', icon: '😠', label: '凶他', base: -3, negative: true },
+  { id: 'trick', icon: '😈', label: '骗他', base: -2, negative: true },
+  { id: 'gift', icon: '🎁', label: '送礼物', base: 4 },
+  { id: 'chat', icon: '💬', label: '聊天', base: 1 },
+  { id: 'watch', icon: '📺', label: '看番', base: 3 },
+  { id: 'teach', icon: '📚', label: '教他', base: 2 },
+  { id: 'homework', icon: '✍️', label: '帮作业', base: 4 },
+  { id: 'game', icon: '🎮', label: '打游戏', base: 3 },
+  { id: 'sleep', icon: '😴', label: '晚安', base: 2 },
+  { id: 'kiss', icon: '💋', label: '亲一下', base: 3, hidden: aff => aff < 70 },
+];
+
+// 随时间衰减（每次动作前检查，每小时 -1）
+function applyDecay() {
+  const now = Date.now();
+  const hours = (now - state.lastVisit) / (1000 * 60 * 60);
+  if (hours > 1) {
+    const decay = Math.floor(hours);
+    state.affection = Math.max(0, state.affection - decay);
+  }
+  state.lastVisit = now;
+}
+
+function calcDelta(action) {
+  const a = ACTIONS.find(x => x.id === action.id);
+  if (!a) return 0;
+  const now = Date.now();
+  const elapsed = now - (state.lastActions[action.id] || 0);
+  // 冷却 3 秒内减半
+  const cooldownMult = elapsed < 3000 ? 0.5 : 1;
+  // 连续 3 次以上衰减
+  const recentCount = state.recentActions.filter(x => x === action.id).length;
+  const repeatMult = recentCount >= 3 ? 0.5 : 1;
+  // 心情系数缩小
+  const mood = getMood(state.affection);
+  let moodMult = 1;
+  if (mood === 'happy') moodMult = 1.2;
+  else if (mood === 'shy') moodMult = 1.1;
+  else if (mood === 'angry') moodMult = 0.5;
+  // 随机波动 0.5~1.5
+  const rand = 0.5 + Math.random();
+  // 暴击 10%
+  let crit = 1;
+  if (Math.random() < 0.1) crit = 2;
+  const raw = a.base * rand * moodMult * cooldownMult * repeatMult * crit;
+  return raw > 0 ? Math.max(1, Math.round(raw)) : Math.round(raw);
+}
+
+function pickDialog(action) {
+  const period = getTimePeriod();
+  // 新加的负向动作复用 tease 对话
+  const actionKey = ['ignore','scold','trick'].includes(action) ? 'tease' : action;
+  const pool = DIALOGS[period][actionKey] || DIALOGS[period].greet;
+  let d = pool[Math.floor(Math.random() * pool.length)];
+  // 偶尔加个语气词前缀
+  if (Math.random() < 0.3) {
+    const prefix = { jp: ['ん…', 'あ…', 'あの…', 'あのさ…', '…'], zh: ['嗯…', '啊…', '那个…', '话说…', '…'] }[
+      Math.floor(Math.random() * 5)
+    ];
+    d = { jp: prefix[0] + d.jp, zh: prefix[1] + d.zh };
+  }
+  return d;
+}
+
+// ============ Galgame 音乐提示音（短旋律） ============
+let _sfx = null;
+async function sfx() {
+  if (!_sfx) {
+    try { _sfx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return null; }
+  }
+  if (_sfx.state==='suspended') await _sfx.resume();
+  return _sfx.state==='running' ? _sfx : null;
+}
+
+function playTone(ctx, freq, start, dur, type, vol, ramp) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(vol, start + 0.02);
+  gain.gain.setValueAtTime(vol, start + dur * (ramp || 0.6));
+  gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(start); osc.stop(start + dur);
+}
+
+async function playMoodBlip() {
+  const ctx = await sfx(); if (!ctx) return;
+  const t = ctx.currentTime;
+  const mood = getMood(state.affection);
+  const action = state._lastAction || 'greet';
+  let override = null;
+  if (action==='tease'||action==='scold'||action==='ignore'||action==='trick') override='angry';
+  if (action==='praise') override='shy';
+  if (action==='touch') override='shy';
+  if (action==='kiss') override='shy';
+  if (action==='gift') override='happy';
+  const emo = override || mood;
+
+  if (emo === 'angry') {
+    playTone(ctx, 180, t, 0.18, 'sawtooth', 0.15, 0.5);
+    playTone(ctx, 215, t + 0.06, 0.15, 'sawtooth', 0.12, 0.5);
+  } else if (emo === 'normal') {
+    playTone(ctx, 523, t, 0.25, 'triangle', 0.18, 0.7);
+  } else if (emo === 'tsundere') {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(440, t);
+    osc.frequency.linearRampToValueAtTime(350, t + 0.2);
+    gain.gain.setValueAtTime(0.18, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.28);
+  } else if (emo === 'happy') {
+    [523, 659, 784, 1047].forEach((f, i) => {
+      playTone(ctx, f, t + i * 0.07, 0.25, 'sine', 0.12, 0.6);
+    });
+  } else if (emo === 'shy') {
+    playTone(ctx, 587, t, 0.25, 'sine', 0.12, 0.7);
+    playTone(ctx, 554, t + 0.12, 0.35, 'sine', 0.1, 0.7);
+  }
+}
+
+// 打字机（中日双语同时显示）
+let typeTimer = null;
+function typeText(dialog, cb) {
+  const el = document.getElementById('dialogText');
+  if (typeTimer) clearInterval(typeTimer);
+  let i = 0;
+  const jp = dialog.jp, zh = dialog.zh;
+  typeTimer = setInterval(() => {
+    if (i >= jp.length) {
+      clearInterval(typeTimer);
+      el.innerHTML = `<div style="color:#fbbf24;font-size:16px;line-height:1.6;font-weight:500;">${jp}</div><div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:4px;line-height:1.5;">${zh}</div>`;
+      if (cb) cb();
+      return;
+    }
+    el.innerHTML = `<div style="color:#fbbf24;font-size:16px;line-height:1.6;font-weight:500;">${jp.substring(0, i + 1)}<span style="animation:blink 1s infinite;">▌</span></div><div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:4px;line-height:1.5;">${zh}</div>`;
+    i++;
+  }, 60);
+}
+function skipType() {
+  if (typeTimer) {
+    clearInterval(typeTimer);
+    typeTimer = null;
+    const d = state._lastDialog;
+    if (d) {
+      document.getElementById('dialogText').innerHTML = `<div style="color:#fbbf24;font-size:16px;line-height:1.6;font-weight:500;">${d.jp}</div><div style="color:rgba(255,255,255,0.75);font-size:13px;margin-top:4px;line-height:1.5;">${d.zh}</div>`;
+    }
+  }
+}
+
+// 渲染
+function render() {
+  document.getElementById('affectionVal').textContent = `${state.affection}/100`;
+  document.getElementById('affectionFill').style.width = state.affection + '%';
+  document.getElementById('affectionStage').textContent = getStage(state.affection);
+  document.getElementById('timeText').textContent = getGreeting() + ' · 第 ' + state.day + ' 天';
+  document.getElementById('statusText').textContent = getStatusText(getMood(state.affection));
+  document.body.className = getTimePeriod();
+  updateFace(getMood(state.affection));
+}
+
+function updateFace(mood) {
+  document.body.classList.remove('happy', 'shy', 'angry', 'tsundere', 'normal');
+  if (mood === 'angry') document.body.classList.add('angry');
+  else if (mood === 'happy') document.body.classList.add('happy');
+  else if (mood === 'shy') {
+    document.body.classList.add('shy');
+    startSparkles();
+  }
+}
+
+function startSparkles() {
+  const layer = document.getElementById('sparkleLayer');
+  if (!layer || layer.children.length > 0) return;
+  for (let i = 0; i < 5; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    layer.appendChild(s);
+  }
+}
+
+function spawnHeart() {
+  const layer = document.getElementById('floatingHearts');
+  if (!layer) return;
+  const h = document.createElement('div');
+  h.className = 'heart';
+  h.textContent = ['💗', '💖', '💕', '✨', '💝'][Math.floor(Math.random() * 5)];
+  h.style.left = (20 + Math.random() * 60) + '%';
+  h.style.top = (40 + Math.random() * 30) + '%';
+  h.style.setProperty('--tx', (Math.random() * 100 - 50) + 'px');
+  layer.appendChild(h);
+  setTimeout(() => h.remove(), 3000);
+}
+
+function doAction(a) {
+  applyDecay();  // 时间衰减
+  state._lastAction = a.id;
+  const actualDelta = calcDelta(a);
+  state.affection = Math.max(0, Math.min(100, state.affection + actualDelta));
+  state.recentActions.push(a.id);
+  if (state.recentActions.length > 5) state.recentActions.shift();
+  state.lastActions[a.id] = Date.now();
+  if (a.id === 'sleep') {
+    if (Date.now() - state.lastVisit > 12 * 3600 * 1000) state.day++;
+  }
+  const dialog = pickDialog(a.id);
+  state._lastDialog = dialog;
+  typeText(dialog);
+  playMoodBlip();  // Galgame 语气音（每句话一声）
+  state.lastVisit = Date.now();
+  save();
+  render();
+  if (actualDelta > 0) {
+    showFloat(`+${actualDelta}`, '#fbbf24');
+    if (state.affection >= 60 && Math.random() < 0.5) {
+      setTimeout(spawnHeart, 200);
+    }
+  } else {
+    showFloat(`${actualDelta}`, '#ef4444');
+  }
+  document.getElementById('allActions').classList.remove('show');
+  setTimeout(() => checkChoices(), 1500);
+}
+
+function showFloat(text, color) {
+  const div = document.createElement('div');
+  div.className = 'float-num';
+  div.textContent = text;
+  div.style.color = color;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 1500);
+}
+
+// 剧情选项
+const CHOICES = [
+  { at: 30, title: '你好像有点无聊？', opts: [
+    { text: '陪他聊聊天', delta: 3, next: 'chat' },
+    { text: '送个小礼物', delta: 5, next: 'gift' },
+    { text: '默默陪着', delta: 2, next: 'quiet' },
+  ]},
+  { at: 60, title: '深夜了，你还没睡？', opts: [
+    { text: '晚安，早点睡', delta: 4, next: 'sleep' },
+    { text: '再聊一会儿', delta: 6, next: 'chat_night' },
+    { text: '我想你了', delta: 8, next: 'miss' },
+  ]},
+  { at: 85, title: '那个…我有点话想跟你说', opts: [
+    { text: '什么话？', delta: 3, next: 'what' },
+    { text: '我喜欢你', delta: 15, next: 'love' },
+    { text: '…', delta: 0, next: 'silent' },
+  ]},
+];
+
+function checkChoices() {
+  const c = CHOICES.find(c => Math.abs(state.affection - c.at) < 3 && !state._shownChoices.includes(c.at));
+  if (c) {
+    state._shownChoices.push(c.at);
+    showChoices(c);
+  }
+}
+
+function showChoices(c) {
+  const box = document.getElementById('choiceBox');
+  box.innerHTML = `<div class="choice-title">${c.title}</div>${c.opts.map((o, i) => `<div class="choice-option" data-i="${i}">${o.text}</div>`).join('')}`;
+  document.getElementById('choiceOverlay').classList.add('show');
+  box.querySelectorAll('.choice-option').forEach((el, i) => {
+    el.onclick = () => {
+      const o = c.opts[i];
+      state.affection = Math.max(0, Math.min(100, state.affection + o.delta));
+      save(); render();
+      document.getElementById('choiceOverlay').classList.remove('show');
+      const respText = o.next === 'love' ? '…你、你说真的？' :
+                       o.next === 'miss' ? '…你、你怎么…我会…一直…' :
+                       o.next === 'silent' ? '…' :
+                       o.next === 'what' ? '…我…我想说…' :
+                       o.next === 'chat_night' ? '…嗯…那…再说两句吧…' :
+                       o.next === 'quiet' ? '…嗯…谢谢…' : '…嗯…';
+      const respJp = o.next === 'love' ? '…ほ、本当に？' :
+                     o.next === 'miss' ? '…あ、あなた…私…ずっと…' :
+                     o.next === 'silent' ? '…' :
+                     o.next === 'what' ? '…わ、私…言いたいことが…' :
+                     o.next === 'chat_night' ? '…ん…じゃ、もう少し…' :
+                     o.next === 'quiet' ? '…ん…ありがと…' : '…ん…';
+      state._lastDialog = { jp: respJp, zh: respText };
+      typeText(state._lastDialog);
+      if (o.delta > 0) showFloat(`+${o.delta}`, '#fbbf24');
+    };
+  });
+}
+
+// 全部动作菜单
+function showAllActions() {
+  const grid = document.getElementById('allActionsGrid');
+  grid.innerHTML = '';
+  ACTIONS.filter(a => !a.hidden || a.hidden(state.affection)).forEach(a => {
+    const minD = Math.round(a.base * 0.5);
+    const maxD = Math.round(a.base * 1.5 * 1.2);  // 含心情加成
+    const btn = document.createElement('button');
+    btn.className = 'action-btn' + (a.negative ? ' negative' : '');
+    const deltaText = a.negative ? `${minD}~${maxD}` : `+${minD}~+${maxD}`;
+    btn.innerHTML = `<span class="icon">${a.icon}</span><span class="label">${a.label}</span><span class="delta">${deltaText}</span>`;
+    btn.onclick = () => doAction(a);
+    grid.appendChild(btn);
+  });
+  document.getElementById('allActions').classList.add('show');
+}
+
+// 漂浮物
+function spawnFX() {
+  const layer = document.getElementById('fxLayer');
+  if (!layer) return;
+  const period = getTimePeriod();
+  let char = '🌸';
+  if (period === 'morning') char = '🌸';
+  else if (period === 'noon') char = '☁️';
+  else if (period === 'evening') char = '🍃';
+  else if (period === 'night') char = '✨';
+  const item = document.createElement('div');
+  item.className = 'fx-item';
+  item.textContent = char;
+  item.style.left = Math.random() * 100 + '%';
+  item.style.top = '-20px';
+  item.style.fontSize = (14 + Math.random() * 12) + 'px';
+  item.style.animationDuration = (6 + Math.random() * 6) + 's';
+  item.style.animationDelay = Math.random() * 4 + 's';
+  layer.appendChild(item);
+  setTimeout(() => item.remove(), 16000);
+}
+for (let i = 0; i < 15; i++) setTimeout(spawnFX, i * 400);
+setInterval(spawnFX, 600);
+
+// BGM
+let audioCtx = null;
+let musicPlaying = false;
+let musicTimer = null;
+function startMusic() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25];
+    let idx = 0;
+    function playNote() {
+      if (!musicPlaying || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = notes[idx % notes.length];
+      gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 1.5);
+      idx++;
+      musicTimer = setTimeout(playNote, 800);
+    }
+    musicPlaying = true;
+    playNote();
+  } catch(e) {}
+}
+function stopMusic() {
+  musicPlaying = false;
+  if (musicTimer) clearTimeout(musicTimer);
+  musicTimer = null;
+}
+
+document.getElementById('musicBtn').addEventListener('click', () => {
+  state.musicOn = !state.musicOn;
+  if (state.musicOn) startMusic(); else stopMusic();
+  document.getElementById('musicBtn').textContent = state.musicOn ? '♫' : '♪';
+  save();
+});
+
+// 事件
+document.querySelectorAll('.quick-btn[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const action = ACTIONS.find(a => a.id === btn.dataset.action);
+    if (action) {
+      if (action.hidden && action.hidden(state.affection)) return;
+      doAction(action);
+    }
+  });
+});
+document.getElementById('moreBtn').addEventListener('click', showAllActions);
+document.getElementById('allActions').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+});
+document.getElementById('charImg').addEventListener('click', () => doAction(ACTIONS.find(a => a.id === 'touch')));
+document.getElementById('bgFull').addEventListener('click', () => doAction(ACTIONS.find(a => a.id === 'touch')));
+document.getElementById('dialogBox').addEventListener('click', skipType);
+
+// 初始化
+applyDecay();  // 离线衰减
+render();
+state._lastAction = 'greet';
+const initDialog = pickDialog('greet');
+state._lastDialog = initDialog;
+typeText(initDialog);
+playMoodBlip();
+
+if (state.musicOn) startMusic();
+</script>
+</body>
+</html>

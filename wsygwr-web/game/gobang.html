@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五子棋 · Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    min-height: 100vh;
+    font-family: "Microsoft YaHei", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: #fff;
+  }
+  .nav { margin-bottom: 20px; }
+  .nav a { color: #fff; text-decoration: none; background: rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 6px; font-size: 14px; }
+  h1 { font-size: 32px; margin-bottom: 10px; }
+  .info { font-size: 16px; margin-bottom: 16px; min-height: 24px; }
+  canvas {
+    background: #deb887;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    max-width: 90vw;
+  }
+  button {
+    margin-top: 16px; padding: 8px 20px; background: #fff; color: #f5576c;
+    border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold;
+  }
+</style>
+</head>
+<body>
+  <div class="nav"><a href="../index.html">← 返回接单页</a></div>
+  <h1>⚫⚪ 五子棋</h1>
+  <div class="info" id="info">你是黑子，电脑是白子</div>
+  <canvas id="game" width="450" height="450"></canvas>
+  <button onclick="reset()">重新开始</button>
+<script>
+const SIZE = 15, CELL = 30;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const infoEl = document.getElementById('info');
+let board, gameOver, aiThinking;
+
+function init() {
+  board = Array.from({length: SIZE}, () => Array(SIZE).fill(0));
+  gameOver = false; aiThinking = false;
+  draw();
+}
+function draw() {
+  ctx.fillStyle = '#deb887'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1;
+  for (let i = 0; i < SIZE; i++) {
+    ctx.beginPath();
+    ctx.moveTo(CELL/2, CELL/2 + i * CELL);
+    ctx.lineTo(canvas.width - CELL/2, CELL/2 + i * CELL);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(CELL/2 + i * CELL, CELL/2);
+    ctx.lineTo(CELL/2 + i * CELL, canvas.height - CELL/2);
+    ctx.stroke();
+  }
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      if (board[y][x]) {
+        ctx.beginPath();
+        ctx.arc(CELL/2 + x * CELL, CELL/2 + y * CELL, CELL/2 - 3, 0, Math.PI * 2);
+        ctx.fillStyle = board[y][x] === 1 ? '#000' : '#fff';
+        ctx.fill();
+        ctx.strokeStyle = '#333'; ctx.stroke();
+      }
+    }
+  }
+}
+function checkWin(x, y, player) {
+  const dirs = [[1,0], [0,1], [1,1], [1,-1]];
+  for (const [dx, dy] of dirs) {
+    let count = 1;
+    for (let i = 1; i < 5; i++) {
+      const nx = x + dx*i, ny = y + dy*i;
+      if (nx<0||ny<0||nx>=SIZE||ny>=SIZE||board[ny][nx]!==player) break;
+      count++;
+    }
+    for (let i = 1; i < 5; i++) {
+      const nx = x - dx*i, ny = y - dy*i;
+      if (nx<0||ny<0||nx>=SIZE||ny>=SIZE||board[ny][nx]!==player) break;
+      count++;
+    }
+    if (count >= 5) return true;
+  }
+  return false;
+}
+function scorePoint(x, y, player) {
+  if (board[y][x] !== 0) return -1;
+  board[y][x] = player;
+  let s = 0;
+  const dirs = [[1,0], [0,1], [1,1], [1,-1]];
+  for (const [dx, dy] of dirs) {
+    let count = 1, open = 0;
+    for (let i = 1; i < 5; i++) {
+      const nx = x + dx*i, ny = y + dy*i;
+      if (nx<0||ny<0||nx>=SIZE||ny>=SIZE) break;
+      if (board[ny][nx] === player) count++;
+      else { if (board[ny][nx] === 0) open++; break; }
+    }
+    for (let i = 1; i < 5; i++) {
+      const nx = x - dx*i, ny = y - dy*i;
+      if (nx<0||ny<0||nx>=SIZE||ny>=SIZE) break;
+      if (board[ny][nx] === player) count++;
+      else { if (board[ny][nx] === 0) open++; break; }
+    }
+    if (count >= 5) s += 100000;
+    else if (count === 4) s += open === 2 ? 10000 : 1000;
+    else if (count === 3) s += open === 2 ? 1000 : 100;
+    else if (count === 2) s += open === 2 ? 100 : 10;
+  }
+  board[y][x] = 0;
+  return s;
+}
+function aiMove() {
+  let best = {x: -1, y: -1, score: -1};
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      if (board[y][x] !== 0) continue;
+      const s = scorePoint(x, y, 2) + scorePoint(x, y, 1) * 0.9;
+      if (s > best.score) best = {x, y, score: s};
+    }
+  }
+  if (best.x >= 0) {
+    board[best.y][best.x] = 2;
+    draw();
+    if (checkWin(best.x, best.y, 2)) {
+      infoEl.textContent = '电脑赢啦！😢';
+      gameOver = true;
+    } else infoEl.textContent = '你是黑子，电脑是白子 · 轮到你';
+  }
+  aiThinking = false;
+}
+canvas.addEventListener('click', e => {
+  if (gameOver || aiThinking) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.round((e.clientX - rect.left - CELL/2) / CELL);
+  const y = Math.round((e.clientY - rect.top - CELL/2) / CELL);
+  if (x<0||y<0||x>=SIZE||y>=SIZE||board[y][x]!==0) return;
+  board[y][x] = 1;
+  draw();
+  if (checkWin(x, y, 1)) {
+    infoEl.textContent = '你赢啦！🎉';
+    gameOver = true; return;
+  }
+  infoEl.textContent = '电脑思考中...';
+  aiThinking = true;
+  setTimeout(aiMove, 300);
+});
+function reset() { infoEl.textContent = '你是黑子，电脑是白子'; init(); }
+init();
+</script>
+</body>
+</html>

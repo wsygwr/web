@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AI 毒舌鉴定器 · 一本正经的胡说八道</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0a0e1a;
+    color: #e0e6ed;
+    min-height: 100vh;
+    overflow-x: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  /* 背景粒子 */
+  #bgCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .wrap { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 30px 20px; }
+
+  /* 头部 */
+  .header { text-align: center; padding: 30px 0 20px; }
+  .header h1 {
+    font-size: 42px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+  }
+  .header .sub {
+    font-size: 14px;
+    color: #94a3b8;
+    font-family: "SF Mono", monospace;
+  }
+  .header .sub::before { content: "> "; color: #22c55e; }
+  .header .sub::after { content: " _"; animation: blink 1s infinite; color: #22c55e; }
+  @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+  /* 卡片 */
+  .card {
+    background: rgba(20, 30, 50, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
+    padding: 32px 24px;
+    margin: 20px 0;
+  }
+
+  /* 表单 */
+  .form-step { display: block; }
+  .form-step.hidden { display: none; }
+  .step-num {
+    font-family: "SF Mono", monospace;
+    color: #22c55e;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .step-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .step-desc {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 20px;
+  }
+  .input-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .input-wrap input {
+    width: 100%;
+    padding: 16px 20px;
+    background: rgba(15, 20, 35, 0.6);
+    border: 1px solid #1f2937;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-wrap input:focus { border-color: #6366f1; }
+  .input-wrap .placeholder {
+    position: absolute;
+    left: 20px;
+    top: 16px;
+    color: #64748b;
+    pointer-events: none;
+    transition: all 0.2s;
+    font-size: 16px;
+  }
+  .input-wrap input:focus + .placeholder,
+  .input-wrap input:not(:placeholder-shown) + .placeholder {
+    top: -8px;
+    left: 12px;
+    font-size: 12px;
+    color: #6366f1;
+    background: #0a0e1a;
+    padding: 0 6px;
+  }
+
+  .btn {
+    background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+    color: #fff;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+    width: 100%;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* 进度点 */
+  .progress {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1f2937;
+    transition: all 0.3s;
+  }
+  .dot.active { background: #6366f1; width: 24px; border-radius: 4px; }
+  .dot.done { background: #22c55e; }
+
+  /* 生成中 */
+  .scanning { text-align: center; padding: 40px 20px; display: none; }
+  .scanning.show { display: block; }
+  .scan-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    animation: rotate 2s linear infinite;
+    display: inline-block;
+  }
+  @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .scan-text {
+    font-family: "SF Mono", monospace;
+    color: #22c55e;
+    font-size: 14px;
+    min-height: 20px;
+  }
+  .scan-progress {
+    margin-top: 20px;
+    width: 100%;
+    height: 4px;
+    background: #1f2937;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .scan-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #ec4899);
+    width: 0;
+    transition: width 0.1s;
+  }
+
+  /* 报告 */
+  .report { display: none; }
+  .report.show { display: block; }
+  .report-header {
+    text-align: center;
+    border-bottom: 1px dashed #1f2937;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+  .report-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .report-name {
+    font-family: "SF Mono", monospace;
+    color: #94a3b8;
+    font-size: 13px;
+  }
+  .report-name span { color: #fbbf24; }
+
+  .metric {
+    margin: 16px 0;
+  }
+  .metric-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  .metric-label .name { color: #cbd5e0; }
+  .metric-label .val { color: #fbbf24; font-weight: bold; font-family: "SF Mono", monospace; }
+  .metric-bar {
+    height: 8px;
+    background: #1f2937;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .metric-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e 0%, #fbbf24 50%, #ef4444 100%);
+    width: 0;
+    transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .metric-comment {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-top: 6px;
+    padding-left: 12px;
+    border-left: 2px solid #6366f1;
+    font-style: italic;
+    min-height: 18px;
+  }
+
+  .roast {
+    margin-top: 20px;
+    padding: 16px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    color: #fca5a5;
+    font-size: 14px;
+    line-height: 1.6;
+    display: none;
+  }
+  .roast.show { display: block; }
+
+  /* 分享区 */
+  .share {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed #1f2937;
+    text-align: center;
+  }
+  .share-tip {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 12px;
+  }
+  .share-btns {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .share-btn {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid #6366f1;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .share-btn:hover { background: #6366f1; }
+
+  /* 接单引流 */
+  .upsell {
+    background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    color: #fff;
+    margin: 20px 0;
+  }
+  .upsell h3 { font-size: 18px; margin-bottom: 6px; }
+  .upsell p { font-size: 13px; opacity: 0.9; margin-bottom: 12px; }
+  .upsell a {
+    display: inline-block;
+    background: #fff;
+    color: #1a1a1a;
+    padding: 8px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  footer { text-align: center; padding: 30px 0; color: #475569; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="wrap">
+  <div class="header">
+    <h1>🔮 AI 毒舌鉴定器</h1>
+    <div class="sub">一本正经的胡说八道</div>
+  </div>
+
+  <!-- 进度点 -->
+  <div class="progress">
+    <div class="dot active" data-step="1"></div>
+    <div class="dot" data-step="2"></div>
+    <div class="dot" data-step="3"></div>
+  </div>
+
+  <!-- 表单 -->
+  <div class="card">
+    <!-- Step 1: 姓名 -->
+    <div class="form-step" id="step1">
+      <div class="step-num">[STEP 1/3]</div>
+      <div class="step-title">你的真实姓名？</div>
+      <div class="step-desc">AI 会基于笔画、五行、谐音进行玄学分析（实际是瞎编）</div>
+      <div class="input-wrap">
+        <input id="in-name" type="text" placeholder=" " maxlength="20">
+        <div class="placeholder">输入姓名（2-4 字）</div>
+      </div>
+      <button class="btn" onclick="nextStep(1)">下一步 →</button>
+    </div>
+
+    <!-- Step 2: QQ 昵称 -->
+    <div class="form-step hidden" id="step2">
+      <div class="step-num">[STEP 2/3]</div>
+      <div class="step-title">你的 QQ 昵称？</div>
+      <div class="step-desc">AI 会从字数、emoji、羞耻度三个维度进行灵魂审判</div>
+      <div class="input-wrap">
+        <input id="in-nick" type="text" placeholder=" " maxlength="30">
+        <div class="placeholder">输入 QQ 昵称</div>
+      </div>
+      <button class="btn" onclick="nextStep(2)">下一步 →</button>
+    </div>
+
+    <!-- Step 3: 游戏 ID -->
+    <div class="form-step hidden" id="step3">
+      <div class="step-num">[STEP 3/3]</div>
+      <div class="step-title">你的游戏 ID？</div>
+      <div class="step-desc">AI 会通过 ID 长度、特殊字符预测你今晚的段位</div>
+      <div class="input-wrap">
+        <input id="in-game" type="text" placeholder=" " maxlength="30">
+        <div class="placeholder">输入游戏 ID</div>
+      </div>
+      <button class="btn" onclick="startScan()">开始鉴定 🔮</button>
+    </div>
+  </div>
+
+  <!-- 扫描中 -->
+  <div class="card scanning" id="scanning">
+    <div class="scan-icon">⚙️</div>
+    <div class="scan-text" id="scanText">正在连接云端毒舌数据库...</div>
+    <div class="scan-progress">
+      <div class="scan-progress-bar" id="scanBar"></div>
+    </div>
+  </div>
+
+  <!-- 报告 -->
+  <div class="card report" id="report">
+    <div class="report-header">
+      <div class="report-title">⚡ 鉴定报告</div>
+      <div class="report-name">
+        姓名: <span id="out-name">-</span> ·
+        昵称: <span id="out-nick">-</span> ·
+        ID: <span id="out-game">-</span>
+      </div>
+    </div>
+
+    <div id="metrics"></div>
+
+    <div class="roast" id="roast"></div>
+
+    <div class="share">
+      <div class="share-tip">📱 测完可以分享给朋友一起挨打</div>
+      <div class="share-btns">
+        <button class="share-btn" onclick="copyText()">📋 复制文字</button>
+        <button class="share-btn" onclick="location.reload()">🔄 再测一次</button>
+      </div>
+    </div>
+
+    <div class="upsell">
+      <h3>💼 测完了？想不想被正经接单？</h3>
+      <p>程序员接单 · 9.9 元起 · 1-3 天交付</p>
+      <a href="index.html#contact">看接单服务 →</a>
+    </div>
+  </div>
+
+  <footer>
+    本工具基于"瞎说八道大模型"v3.1 · 结果不构成任何人生建议<br>
+    <a href="index.html" style="color:#475569;text-decoration:none;">← 回到接单页</a>
+  </footer>
+</div>
+
+<script>
+// ============ 毒舌模板库 ============
+const ROAST = {
+  name: [
+    "笔画超过 X，注定一辈子在 Excel 里打转",
+    "你的名字五行缺'努力'",
+    "名字带'草'字头 → 天生卷王，卷到 30 岁",
+    "名字谐音像某个老板 → 命中注定打工仔",
+    "你的名字暗示：30 岁前月光，30 岁后做月光族代表",
+    "此名自带'老板最爱的员工'光环，但工资最少",
+    "你的名字在公司微信群里被@的频率是别人 3 倍",
+    "名字里带'小'字 → 同事喊你'小 X'直到 40 岁",
+    "你的名字五行缺'钱'，建议改个带'鑫'的名字",
+    "你的名字读起来像在叹气，注定一辈子叹气",
+  ],
+  nick: [
+    "昵称越怪，社死概率越大",
+    "你的昵称+头像组合 → 微信好友翻脸率 +37%",
+    "昵称字数 = X → 你这辈子中过 0 个奖",
+    "昵称 emoji 数量 ≥ 6 → 情绪波动 +99%",
+    "你的昵称暗示：朋友圈点赞 < 3",
+    "昵称带'深夜''买醉'→ 你爸妈看到会直接打你",
+    "你的昵称和签名很配 → 中二浓度过高",
+    "昵称字数 < 3 → 你是一个无趣的人（统计学意义上）",
+    "你的昵称里带 X 个生僻字 → 你用输入法打字慢 50%",
+    "你的昵称去年换过 X 次 → 你的头像换了 X+1 次",
+  ],
+  game: [
+    "ID 长度 < 4 → 队友信任度 -50%",
+    "ID 里有'小'字 → 大佬认证概率 3%",
+    "ID 重复使用超过 3 个平台 → 你的'社死黑历史'已上传云端",
+    "你的 ID 在队友眼里 = '这哥们来搞笑的'",
+    "ID 里有'X' → 你的胜率在 X% 以下",
+    "ID 长度 = X → 你的段位在 X 段以下",
+    "你的 ID 暗示：今晚掉段概率 87%",
+    "ID 包含'无敌''最狂'→ 实际胜率 < 40%",
+    "ID 里的数字是你的生日 → 你以为队友认不出来",
+    "你的 ID 暗示：未来 7 天会匹配到 3 个挂机的队友",
+  ]
+};
+
+const METRICS = [
+  { key: 'stayingUp', name: '熬夜概率', comment: ['今晚 3 点前必有一局', '昨晚 2 点睡的请举手', '建议买点护肝片'] },
+  { key: 'love', name: '恋爱成功率', comment: ['对象在二次元', '上辈子可能有过', '建议先把游戏卸了'] },
+  { key: 'procrast', name: '摸鱼指数', comment: ['今日带薪蹲坑 ≥ 2 次', '你的工位 1/3 时间空着', '工位监控 AI 已记录'] },
+  { key: 'social', name: '社交活跃度', comment: ['朋友圈点赞 < 5', '微信通讯录 70% 是同行', '你的"在吗"永远没人回'] },
+  { key: 'hair', name: '脱发预警', comment: ['植发 1 次 ≈ 接 30 单', '枕头上发现 X 根', '发际线已退到 X 公里外'] },
+  { key: 'career', name: '升职加薪概率', comment: ['老板画饼中', '建议同时投 3 家', '你的简历需要 1.0 版本'] },
+];
+
+// ============ 背景粒子 ============
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resizeCanvas() { canvas.width = innerWidth; canvas.height = innerHeight; }
+resizeCanvas();
+addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.vy = (Math.random() - 0.5) * 0.3;
+    this.r = Math.random() * 1.5 + 0.5;
+    this.c = `rgba(${100+Math.random()*100}, ${150+Math.random()*100}, 255, ${0.3+Math.random()*0.4})`;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+    if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = this.c;
+    ctx.fill();
+  }
+}
+for (let i = 0; i < 50; i++) particles.push(new Particle());
+(function loop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(loop);
+})();
+
+// ============ 步骤切换 ============
+const inputs = { name: '', nick: '', game: '' };
+
+function nextStep(current) {
+  const val = document.getElementById('in-' + ['name', 'nick', 'game'][current - 1]).value.trim();
+  if (!val) { alert('输入点东西嘛~'); return; }
+  inputs[['name', 'nick', 'game'][current - 1]] = val;
+  document.getElementById('step' + current).classList.add('hidden');
+  document.getElementById('step' + (current + 1)).classList.remove('hidden');
+  // 更新进度点
+  document.querySelectorAll('.dot').forEach((d, i) => {
+    d.classList.remove('active', 'done');
+    if (i < current) d.classList.add('done');
+    else if (i === current) d.classList.add('active');
+  });
+  setTimeout(() => document.getElementById('in-' + ['name', 'nick', 'game'][current]).focus(), 100);
+}
+
+// 回车切换步骤
+['in-name', 'in-nick', 'in-game'].forEach((id, i) => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (i < 2) nextStep(i + 1);
+      else startScan();
+    }
+  });
+});
+
+// ============ 扫描 + 报告生成 ============
+async function startScan() {
+  const val = document.getElementById('in-game').value.trim();
+  if (!val) { alert('输入点东西嘛~'); return; }
+  inputs.game = val;
+
+  // 隐藏表单，显示扫描
+  document.getElementById('step3').classList.add('hidden');
+  document.getElementById('scanning').classList.add('show');
+
+  // 扫描动画
+  const scanTexts = [
+    '正在连接云端毒舌数据库...',
+    '分析笔画...',
+    '检测社死浓度...',
+    '预测段位变化...',
+    '匹配你的命格...',
+    '生成毒舌话术...',
+    '即将完成...',
+  ];
+  const bar = document.getElementById('scanBar');
+  const text = document.getElementById('scanText');
+  for (let i = 0; i <= 100; i += 2) {
+    bar.style.width = i + '%';
+    if (i % 14 === 0) text.textContent = scanTexts[Math.floor(i / 14)] || '即将完成...';
+    await new Promise(r => setTimeout(r, 40));
+  }
+
+  // 生成报告
+  document.getElementById('scanning').classList.remove('show');
+  showReport();
+}
+
+function pick(arr, seed) {
+  // 基于 seed 的伪随机
+  let s = seed;
+  for (let i = 0; i < 10; i++) s = (s * 9301 + 49297) % 233280;
+  return arr[Math.abs(s) % arr.length];
+}
+
+function generateValue(seed) {
+  let s = seed;
+  for (let i = 0; i < 5; i++) s = (s * 9301 + 49297) % 233280;
+  return Math.abs(s) % 101;
+}
+
+function showReport() {
+  // 填充基本信息
+  document.getElementById('out-name').textContent = inputs.name;
+  document.getElementById('out-nick').textContent = inputs.nick;
+  document.getElementById('out-game').textContent = inputs.game;
+
+  const seed = (inputs.name + inputs.nick + inputs.game).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+
+  // 生成 6 个指标
+  const metricsEl = document.getElementById('metrics');
+  metricsEl.innerHTML = '';
+  const results = [];
+  METRICS.forEach(m => {
+    const val = generateValue(seed + m.key.length);
+    const comment = pick(m.comment, seed + m.key.length);
+    results.push({ val, comment });
+    const div = document.createElement('div');
+    div.className = 'metric';
+    div.innerHTML = `
+      <div class="metric-label">
+        <span class="name">${m.name}</span>
+        <span class="val">${val}%</span>
+      </div>
+      <div class="metric-bar"><div class="metric-fill"></div></div>
+      <div class="metric-comment">"${comment}"</div>
+    `;
+    metricsEl.appendChild(div);
+    // 延迟动画
+    setTimeout(() => {
+      div.querySelector('.metric-fill').style.width = val + '%';
+    }, 100);
+  });
+
+  // 终极毒舌
+  const nameLen = inputs.name.length;
+  const nickLen = inputs.nick.length;
+  const gameLen = inputs.game.length;
+
+  const roast = `${inputs.name}，你名字${nameLen}画，注定了${pick(['加班', '被甩', '脱发', '外卖永远迟到'], seed * 1)}；
+你的昵称"${inputs.nick}"，${nickLen}个字，AI 检测到你的中二浓度是常人的 ${generateValue(seed + 7)}%；
+你的游戏 ID"${inputs.game}"，${gameLen}字符，AI 预测你下次匹配到挂机队友的概率是 ${generateValue(seed + 13)}%。
+
+综合建议：立刻把游戏卸了，去 ${pick(['学 Python', '学英语', '锻炼身体', '给爸妈打电话'], seed * 3)}。`;
+
+  const roastEl = document.getElementById('roast');
+  roastEl.textContent = roast;
+  setTimeout(() => roastEl.classList.add('show'), 1500);
+
+  // 显示报告
+  document.getElementById('report').classList.add('show');
+  document.getElementById('report').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============ 复制文字 ============
+function copyText() {
+  const name = document.getElementById('out-name').textContent;
+  const metrics = [...document.querySelectorAll('.metric')].map(m => {
+    const name = m.querySelector('.name').textContent;
+    const val = m.querySelector('.val').textContent;
+    return `${name}: ${val}`;
+  }).join('\n');
+  const roast = document.getElementById('roast').textContent;
+
+  const text = `🔮 AI 毒舌鉴定器结果\n\n姓名: ${name}\n\n${metrics}\n\n${roast}\n\n👉 测一测你自己: ${location.href}`;
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('已复制！粘贴到 QQ/微信给朋友看吧 😈');
+    });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('已复制！');
+  }
+}
+
+// 初始聚焦
+setTimeout(() => document.getElementById('in-name').focus(), 300);
+</script>
+
+</body>
+</html>
