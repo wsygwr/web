@@ -358,6 +358,225 @@
     color: #666;
     font-size: 13px;
   }
+
+  /* ============ 暗色模式 ============ */
+  body.dark { background: #0a0e1a; color: #e0e6ed; }
+  body.dark .hero { background: radial-gradient(circle at 20% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 100%, rgba(236, 72, 153, 0.1) 0%, transparent 50%), #0a0e1a; }
+  body.dark .hero h1 { color: #fff; }
+  body.dark .hero h1 .accent { color: #818cf8; }
+  body.dark .hero p.lead { color: #b0b8c4; }
+  body.dark nav { background: rgba(15, 20, 35, 0.85); border-bottom-color: #1f2937; }
+  body.dark nav .logo, body.dark nav .nav-links a { color: #cbd5e0; }
+  body.dark .services, body.dark .process { background: #111827; }
+  body.dark .works, body.dark .faq { background: #0a0e1a; }
+  body.dark .section-h2 { color: #fff; }
+  body.dark .section-desc { color: #94a3b8; }
+  body.dark .service-item { border-bottom-color: #1f2937; }
+  body.dark .service-name { color: #fff; }
+  body.dark .service-desc { color: #94a3b8; }
+  body.dark .work-card { background: #1a2030; border-color: #1f2937; }
+  body.dark .work-info h3 { color: #fff; }
+  body.dark .work-info p { color: #94a3b8; }
+  body.dark .work-info .tech { color: #64748b; }
+  body.dark .faq-item { background: #1a2030; border-color: #1f2937; }
+  body.dark .faq-q { color: #e0e6ed; }
+  body.dark .faq-a { color: #94a3b8; }
+  body.dark .calc-card, body.dark .tool-card { background: #1a2030; border-color: #1f2937; }
+  body.dark .calc-card h2, body.dark .tool-card h3 { color: #fff; }
+  body.dark .calc-row label, body.dark .calc-row .check-label { color: #94a3b8; }
+  body.dark .calc-row select, body.dark .tool-card input, body.dark .tool-card textarea {
+    background: #0a0e1a; color: #e0e6ed; border-color: #374151;
+  }
+  body.dark .process-step h3 { color: #fff; }
+  body.dark .process-step p { color: #94a3b8; }
+
+  #themeToggle {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: #1a1a1a; color: #fff;
+    border: none; cursor: pointer;
+    font-size: 20px; z-index: 99;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+  }
+  #themeToggle:hover { transform: scale(1.1) rotate(15deg); }
+  body.dark #themeToggle { background: #f59e0b; color: #1a1a1a; }
+
+  /* ============ 报价计算器 ============ */
+  .calc-section { background: #fff; padding: 80px 0; }
+  body.dark .calc-section { background: #111827; }
+  .calc-card {
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  body.dark .calc-card { background: #1a2030; border-color: #1f2937; }
+  .calc-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .calc-row label {
+    flex: 0 0 100px;
+    font-weight: 500;
+    color: #555;
+  }
+  .calc-row select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 150px;
+  }
+  .calc-row .check-wrap { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .calc-row .check-wrap input { width: 20px; height: 20px; }
+  .calc-row .check-wrap span { font-size: 14px; color: #666; }
+  .calc-btn {
+    background: #1a1a1a; color: #fff;
+    padding: 12px 32px;
+    border: none; border-radius: 8px;
+    cursor: pointer; font-size: 15px;
+    transition: all 0.2s;
+  }
+  .calc-btn:hover { background: #333; transform: translateY(-1px); }
+  .calc-result {
+    margin-top: 24px;
+    padding: 24px;
+    background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+    border-radius: 12px;
+    color: #fff;
+    text-align: center;
+  }
+  .calc-price-num {
+    font-size: 48px;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .calc-price-detail { font-size: 13px; opacity: 0.9; }
+  .calc-result .cta { background: #fff; color: #1a1a1a; }
+  .calc-result .cta:hover { background: #f0f0f0; }
+
+  /* ============ 小工具 ============ */
+  .tools-section { background: #fafafa; padding: 80px 0; }
+  body.dark .tools-section { background: #0a0e1a; }
+  .tools-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  @media (min-width: 700px) { .tools-grid { grid-template-columns: 1fr 1fr; } }
+  .tool-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .tool-card h3 { margin-bottom: 8px; font-size: 18px; }
+  .tool-card p { font-size: 13px; color: #888; margin-bottom: 16px; }
+  .tool-card input, .tool-card textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: "SF Mono", monospace;
+    margin-bottom: 8px;
+  }
+  .tool-card textarea { min-height: 80px; resize: vertical; }
+  .tool-card button {
+    background: #1a1a1a; color: #fff;
+    padding: 6px 16px;
+    border: none; border-radius: 6px;
+    cursor: pointer; font-size: 13px;
+  }
+  .tool-output {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 6px;
+    font-family: "SF Mono", monospace;
+    font-size: 12px;
+    word-break: break-all;
+    margin-top: 8px;
+    min-height: 30px;
+    white-space: pre-wrap;
+  }
+  body.dark .tool-output { background: #0a0e1a; color: #cbd5e0; }
+  .color-swatch {
+    height: 70px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: flex-end;
+    padding: 8px;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
+  }
+  .color-swatch:hover { transform: scale(1.02); }
+  .color-label { font-size: 11px; line-height: 1.4; }
+
+  /* ============ 命令面板 ============ */
+  #cmd-palette {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 15vh;
+  }
+  #cmd-palette.open { display: flex; }
+  .cmd-box {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 500px;
+    overflow: hidden;
+  }
+  body.dark .cmd-box { background: #1a2030; }
+  #cmd-input {
+    width: 100%;
+    padding: 16px 20px;
+    border: none;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+    outline: none;
+    background: transparent;
+    color: inherit;
+  }
+  body.dark #cmd-input { border-bottom-color: #1f2937; }
+  #cmd-list { max-height: 300px; overflow-y: auto; }
+  .cmd-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 1px solid #f5f5f5;
+    transition: background 0.1s;
+  }
+  body.dark .cmd-item { border-bottom-color: #1f2937; }
+  .cmd-item:hover, .cmd-item.active { background: #f0f0f0; }
+  body.dark .cmd-item:hover, body.dark .cmd-item.active { background: #2a3548; }
+  .cmd-hint {
+    padding: 8px 20px;
+    font-size: 11px;
+    color: #999;
+    background: #fafafa;
+    border-top: 1px solid #eee;
+    text-align: center;
+  }
+  body.dark .cmd-hint { background: #111827; border-top-color: #1f2937; color: #64748b; }
 </style>
 </head>
 <body>
@@ -556,6 +775,103 @@
   </div>
 </section>
 
+<!-- ============ 报价计算器 ============ -->
+<section class="calc-section" id="calc">
+  <div class="container">
+    <div class="section-title">PRICING</div>
+    <h2 class="section-h2">💰 报价计算器</h2>
+    <p class="section-desc">选一下你的需求，自动出预估价格（不承诺最终价，最终以沟通为准）</p>
+
+    <div class="calc-card">
+      <div class="calc-row">
+        <label>服务类型</label>
+        <select id="calc-service">
+          <option value="9.9">网页 / 落地页（基础）</option>
+          <option value="19.9">网页 / 落地页（带后端）</option>
+          <option value="19.9">APK 打包</option>
+          <option value="29.9">微信小游戏</option>
+          <option value="19.9">Python 脚本</option>
+          <option value="29.9">Luanti 机器人</option>
+        </select>
+      </div>
+      <div class="calc-row">
+        <label>复杂度</label>
+        <select id="calc-complexity">
+          <option value="1">简单（1-2 小时）</option>
+          <option value="2" selected>中等（半天-1 天）</option>
+          <option value="3">复杂（2-3 天）</option>
+          <option value="5">很复杂（一周+）</option>
+        </select>
+      </div>
+      <div class="calc-row">
+        <label>加急</label>
+        <div class="check-wrap">
+          <input type="checkbox" id="calc-urgent">
+          <span>24 小时内交付（加 50%）</span>
+        </div>
+      </div>
+      <div class="calc-row">
+        <label>学生优惠</label>
+        <div class="check-wrap">
+          <input type="checkbox" id="calc-student">
+          <span>在读学生 7 折（需学信网截图）</span>
+        </div>
+      </div>
+      <button class="calc-btn" onclick="calcPrice()">💰 算一下多少钱</button>
+      <div id="calc-result"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 小工具 ============ -->
+<section class="tools-section" id="tools">
+  <div class="container">
+    <div class="section-title">TOOLS</div>
+    <h2 class="section-h2">🛠️ 在线小工具</h2>
+    <p class="section-desc">顺手做的小工具，免费用 · 数据不上传，全部本地处理</p>
+
+    <div class="tools-grid">
+
+      <div class="tool-card">
+        <h3>📷 图片转 Base64</h3>
+        <p>把图片转成 Base64 字符串，用于 CSS / HTML 内嵌</p>
+        <input type="file" id="tool-base64-file" accept="image/*">
+        <button onclick="tools.base64()">转换</button>
+        <div class="tool-output" id="tool-base64-out">结果会显示在这里...</div>
+      </div>
+
+      <div class="tool-card">
+        <h3>{ } JSON 格式化</h3>
+        <p>压缩的 JSON 一键格式化，自动语法检查</p>
+        <textarea id="tool-json-in" placeholder='{"name":"wsygwr","skill":["js","py"]}'></textarea>
+        <button onclick="tools.json()">格式化</button>
+        <div class="tool-output" id="tool-json-out">结果会显示在这里...</div>
+      </div>
+
+      <div class="tool-card">
+        <h3>🎨 配色方案生成</h3>
+        <p>输入一个主色，自动生成 5 档深浅配色</p>
+        <input type="color" id="tool-color-base" value="#6366f1">
+        <button onclick="tools.color()">生成配色</button>
+        <div id="tool-color-out"></div>
+      </div>
+
+      <div class="tool-card">
+        <h3>⌨️ 快捷键提示</h3>
+        <p>试试这些快捷键，秒变专业感</p>
+        <ul style="list-style:none;font-size:14px;line-height:2;color:#666;">
+          <li>• <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;">Ctrl + K</code> → 打开命令面板</li>
+          <li>• <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;">Esc</code> → 关闭命令面板</li>
+          <li>• <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;">↑↓</code> → 选择命令</li>
+          <li>• <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;">Enter</code> → 执行</li>
+          <li>• <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;">🌙</code> → 右下角切换暗色模式</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 <!-- ============ 流程区 ============ -->
 <section class="process" id="process">
   <div class="container">
@@ -638,6 +954,18 @@
   接单服务 · 9.9 元起 · 认真做活
 </footer>
 
+<!-- 暗色模式按钮 -->
+<button id="themeToggle" title="切换暗色模式">🌙</button>
+
+<!-- 命令面板 (Ctrl+K) -->
+<div id="cmd-palette" onclick="if(event.target===this) closeCmd()">
+  <div class="cmd-box">
+    <input id="cmd-input" placeholder="输入命令... (试试 '计算器' 或 '工具')" autocomplete="off">
+    <div id="cmd-list"></div>
+    <div class="cmd-hint">↑↓ 选择 · Enter 执行 · Esc 关闭</div>
+  </div>
+</div>
+
 <script>
 // FAQ 折叠
 document.querySelectorAll('.faq-q').forEach(q => {
@@ -674,6 +1002,155 @@ document.querySelectorAll('section').forEach(s => {
 // 第一个 section 立即显示
 document.querySelector('.hero').style.opacity = '1';
 document.querySelector('.hero').style.transform = 'none';
+
+// ============ 6. 暗色模式切换 ============
+const themeBtn = document.getElementById('themeToggle');
+const savedTheme = localStorage.getItem('theme') || 'light';
+if (savedTheme === 'dark') document.body.classList.add('dark');
+updateThemeIcon();
+
+function updateThemeIcon() {
+  if (themeBtn) themeBtn.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+}
+
+if (themeBtn) {
+  themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    updateThemeIcon();
+  });
+}
+
+// ============ 7. 报价计算器 ============
+function calcPrice() {
+  const service = +document.getElementById('calc-service').value;
+  const complexity = +document.getElementById('calc-complexity').value;
+  const urgent = document.getElementById('calc-urgent').checked;
+  const student = document.getElementById('calc-student').checked;
+  const base = service * complexity;
+  let final = base;
+  if (urgent) final *= 1.5;
+  if (student) final *= 0.7;
+  final = Math.max(9.9, Math.round(final * 10) / 10);
+  document.getElementById('calc-result').innerHTML = `
+    <div class="calc-price-num">¥${final.toFixed(1)}</div>
+    <div class="calc-price-detail">
+      基础: ¥${base}${urgent ? ' · 加急 +50%' : ''}${student ? ' · 学生 7 折' : ''}
+    </div>
+    <a class="cta" href="#contact" style="margin-top:12px;">这个价能接受，去聊</a>
+  `;
+}
+
+// ============ 8. 小工具 ============
+const tools = {
+  'base64': () => {
+    const file = document.getElementById('tool-base64-file').files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('tool-base64-out').value = e.target.result.substring(0, 500) + (e.target.result.length > 500 ? '...(已截断)' : '');
+    };
+    reader.readAsDataURL(file);
+  },
+  'json': () => {
+    const input = document.getElementById('tool-json-in').value.trim();
+    try {
+      const obj = JSON.parse(input);
+      document.getElementById('tool-json-out').value = JSON.stringify(obj, null, 2);
+    } catch (e) {
+      document.getElementById('tool-json-out').value = '❌ JSON 解析失败：' + e.message;
+    }
+  },
+  'color': () => {
+    const base = document.getElementById('tool-color-base').value;
+    const html = document.getElementById('tool-color-out');
+    const colors = [
+      { name: '主色', hex: base },
+      { name: '深一档', hex: shadeColor(base, -20) },
+      { name: '深两档', hex: shadeColor(base, -40) },
+      { name: '浅一档', hex: shadeColor(base, 20) },
+      { name: '浅两档', hex: shadeColor(base, 40) },
+    ];
+    html.innerHTML = colors.map(c => `
+      <div class="color-swatch" style="background:${c.hex}">
+        <div class="color-label">${c.name}<br>${c.hex}</div>
+      </div>
+    `).join('');
+  }
+};
+function shadeColor(hex, percent) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.max(0, Math.min(255, (num >> 16) + percent));
+  const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + percent));
+  const b = Math.max(0, Math.min(255, (num & 0xff) + percent));
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+}
+
+// 暴露给 HTML onclick
+window.calcPrice = calcPrice;
+window.tools = tools;
+
+// ============ 9. 命令面板 (Ctrl+K) ============
+const cmds = [
+  { name: '💰 报价计算器', action: () => document.getElementById('calc').scrollIntoView({behavior:'smooth'}) },
+  { name: '🛠️ 小工具', action: () => document.getElementById('tools').scrollIntoView({behavior:'smooth'}) },
+  { name: '🎮 试玩游戏', action: () => document.querySelector('.works').scrollIntoView({behavior:'smooth'}) },
+  { name: '📋 5 类服务', action: () => document.getElementById('services').scrollIntoView({behavior:'smooth'}) },
+  { name: '❓ FAQ', action: () => document.getElementById('faq').scrollIntoView({behavior:'smooth'}) },
+  { name: '📞 联系我', action: () => document.getElementById('contact').scrollIntoView({behavior:'smooth'}) },
+  { name: '🌙 切换暗色模式', action: () => themeBtn.click() },
+  { name: '🏠 回到顶部', action: () => window.scrollTo({top: 0, behavior: 'smooth'}) },
+];
+let cmdIdx = 0;
+const cmdPalette = document.getElementById('cmd-palette');
+const cmdInput = document.getElementById('cmd-input');
+const cmdList = document.getElementById('cmd-list');
+
+function renderCmds(filter = '') {
+  const filtered = cmds.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+  cmdList.innerHTML = filtered.map((c, i) =>
+    `<div class="cmd-item ${i === 0 ? 'active' : ''}" data-idx="${i}">${c.name}</div>`
+  ).join('');
+  cmdList.querySelectorAll('.cmd-item').forEach((el, i) => {
+    el.onclick = () => { filtered[i].action(); closeCmd(); };
+  });
+  cmdIdx = 0;
+}
+function openCmd() {
+  cmdPalette.classList.add('open');
+  cmdInput.value = '';
+  renderCmds();
+  setTimeout(() => cmdInput.focus(), 50);
+}
+function closeCmd() { cmdPalette.classList.remove('open'); }
+window.openCmd = openCmd;
+window.closeCmd = closeCmd;
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openCmd(); }
+  if (e.key === 'Escape' && cmdPalette.classList.contains('open')) closeCmd();
+  if (cmdPalette.classList.contains('open')) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      cmdIdx = Math.min(cmdIdx + 1, cmdList.children.length - 1);
+      cmdList.querySelectorAll('.cmd-item').forEach((el, i) => el.classList.toggle('active', i === cmdIdx));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      cmdIdx = Math.max(cmdIdx - 1, 0);
+      cmdList.querySelectorAll('.cmd-item').forEach((el, i) => el.classList.toggle('active', i === cmdIdx));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const active = cmdList.querySelector('.cmd-item.active');
+      if (active) active.click();
+    }
+  }
+});
+if (cmdInput) cmdInput.addEventListener('input', e => renderCmds(e.target.value));
+
+// 顶部小提示
+console.log('%c程序员接单 · wsygwr', 'color:#6366f1;font-size:20px;font-weight:bold;');
+console.log('%c按 Ctrl+K (或 Cmd+K) 试试命令面板', 'color:#666;');
+
 </script>
 
 </body>
